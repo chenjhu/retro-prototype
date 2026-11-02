@@ -1,0 +1,6 @@
+# Personal data stays out of the code repo. Point DATA_DIR somewhere else
+# (or version it in its own private repo) if you want history.
+/data/
+node_modules/
+*.tmp
+.DS_Store

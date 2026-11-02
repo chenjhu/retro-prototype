@@ -1,0 +1,97 @@
+# Data format (for people and AI agents)
+
+All data is plain Markdown on local disk: **one file per ISO week** in the data
+directory (default `./data`, override with `DATA_DIR`).
+
+```
+data/
+  2026-W44.md
+  2026-W45.md
+```
+
+Weeks follow ISO-8601: they start on **Monday**, and `2026-W45` = 2026-11-02 … 2026-11-08.
+
+## File layout
+
+```markdown
+# Week 2026-W45 (2026-11-02 to 2026-11-08)
+
+## Pinned
+
+- [ ] Submit visa form
+- [x] Book flights
+
+## Mon 2026-11-02
+
+### Academics
+
+- [x] Read paper A
+- [ ] Problem set 3
+
+### Work
+
+### Personal
+
+## Tue 2026-11-03
+
+...one "##" section per day, Mon to Sun...
+
+## Notes
+
+Free-form Markdown, kept verbatim (weekly reflection, plans, etc.).
+```
+
+Rules:
+
+| Element | Meaning |
+|---|---|
+| `## Pinned` | Tasks that must get done this week, not tied to a day |
+| `## <anything> YYYY-MM-DD` | A day. Only the date matters; the weekday name is cosmetic |
+| `### <Category>` under a day | A column. Default: `Academics`, `Work`, `Personal`. New names become new columns |
+| `- [ ] text` / `- [x] text` | Open / done task. One line per task |
+| `## Notes` | Free text until the next `##` heading |
+
+## Editing the file directly (agents welcome)
+
+The app watches the folder, so open browsers update within a moment of a file
+change. The parser is forgiving:
+
+- `*`, `+` or `-` bullets; `[x]` or `[X]` both mean done.
+- A bullet without a checkbox (`- text`) becomes an open task.
+- Category names match case-insensitively (`### work` goes into `Work`).
+- Sections with dates outside the file's week, and unknown `##` sections, are ignored.
+- The app rewrites the file in the canonical layout above on the next save, so
+  anything outside these rules (comments, extra text inside day sections) is dropped.
+  Put free text in `## Notes`.
+
+Write atomically if you can (write a temp file, then rename) to avoid the app
+reading a half-written file.
+
+## HTTP API (while the server runs)
+
+| Method & path | Returns |
+|---|---|
+| `GET /api/config` | `{ today, currentWeek, defaultCategories }` |
+| `GET /api/weeks` | `{ weeks: ["2026-W44", ...] }`: weeks that have a file |
+| `GET /api/weeks/2026-W45` | Week as JSON (an empty template if no file yet) plus `version` |
+| `GET /api/weeks/2026-W45.md` | The raw Markdown |
+| `PUT /api/weeks/2026-W45` | Replace the week with a JSON body. Send `If-Match: "<version>"` to get `409` instead of overwriting newer changes |
+| `PUT /api/weeks/2026-W45.md` | Same, with a Markdown body |
+| `GET /api/export` | Every week as JSON, for feeding into planning prompts |
+| `GET /api/events` | Server-sent events: `week-changed {week, version}` |
+
+JSON shape:
+
+```json
+{
+  "week": "2026-W45",
+  "categories": ["Academics", "Work", "Personal"],
+  "pinned": [{ "text": "Submit visa form", "done": false }],
+  "days": [
+    { "date": "2026-11-02", "items": { "Academics": [{ "text": "Read paper A", "done": true }], "Work": [], "Personal": [] } }
+  ],
+  "notes": "",
+  "dates": ["2026-11-02", "..."],
+  "version": "3f2a9c..."
+}
+```
