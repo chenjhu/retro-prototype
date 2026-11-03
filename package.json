@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node server",
-    "test": "node --test --test-timeout=20000"
+    "test": "node --test --test-timeout=20000",
+    "merge": "node scripts/merge.js"
   }
 }
