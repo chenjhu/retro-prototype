@@ -71,7 +71,7 @@ function render() {
   renderSync();
   if (!week) return;
 
-  if (!categories().includes(ui.category)) ui.category = categories()[0];
+  if (!categories().includes(ui.category)) ui.category = busiestCategory(week);
   if (!week.days.some((d) => d.date === ui.focusDate)) ui.focusDate = defaultFocus();
 
   const done =
@@ -134,6 +134,16 @@ function goToWeek(id) {
   const cur = store.state.weekId;
   if (id === cur) return renderPickers(cur);
   openWeek(id, id > cur ? 1 : -1);
+}
+
+/** First visit on this device (nothing remembered yet): open the category with the most
+ *  tasks today, else this week, so a fresh home-screen app doesn't open on an empty list. */
+function busiestCategory(week) {
+  const today = week.days.find((d) => d.date === todayLocal());
+  const count = (c, days) => days.reduce((n, d) => n + (d.items[c]?.length ?? 0), 0);
+  const pick = (days) => week.categories.reduce((best, c) => (count(c, days) > count(best, days) ? c : best));
+  if (today && week.categories.some((c) => today.items[c]?.length)) return pick([today]);
+  return pick(week.days);
 }
 
 function renderSync() {
