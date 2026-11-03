@@ -29,6 +29,27 @@ npm start
 
 在外面用手机访问：服务没有登录功能，**不要把端口暴露到公网**。推荐装 [Tailscale](https://tailscale.com)（免费），电脑和手机登录同一个账号后，手机用电脑的 Tailscale 地址访问。
 
+## 后台运行（Mac，推荐）
+
+不用开着终端：登录 Mac 后自动启动，出错退出会自动重启。安装一次即可（把路径换成你的数据文件夹）：
+
+```bash
+bash ~/Projects/retro-prototype/scripts/service.sh install "$HOME/路径/到/data"
+```
+
+安装后，`retro` 这个缩写变成「拉取最新代码并重启后台服务」，运行完终端可以直接关掉。其他命令：
+
+| 命令 | 作用 |
+|---|---|
+| `bash scripts/service.sh status` | 是否在运行、手机该用哪个地址 |
+| `bash scripts/service.sh logs` | 查看运行日志（`Ctrl + C` 退出查看） |
+| `bash scripts/service.sh stop` / `start` | 暂停 / 重新启动（`stop` 之后下次登录仍会自动启动） |
+| `bash scripts/service.sh uninstall` | 卸载后台服务，`retro` 恢复成在终端里运行；数据不受影响 |
+
+注意：
+- Mac **睡眠或关机**时手机连不上。想合上屏幕也能用，在「系统设置 → 电池 → 选项」里打开「接通电源时防止自动进入睡眠」。
+- 如果日志提示 macOS 不允许访问数据文件夹（OneDrive 里的文件夹可能会这样），在「系统设置 → 隐私与安全性 → 完全磁盘访问权限」里加入 `node`，然后运行 `retro`。
+
 ## 使用
 
 界面有三种模式，点哪个部分就展开哪个，其余部分收起变灰：

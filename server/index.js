@@ -281,6 +281,12 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
   const server = http.createServer((req, res) => {
     handle(req, res).catch((e) => {
       console.error(e);
+      if (e.code === 'EPERM' || e.code === 'EACCES') {
+        console.error(
+          `macOS blocked access to ${dataDir}. If Retro runs as a background service, allow it in ` +
+            'System Settings → Privacy & Security → Full Disk Access (add the node program), then run: retro',
+        );
+      }
       if (!res.headersSent) send(res, e.status ?? 500, { error: e.status ? e.message : 'Internal error' });
       else res.end();
     });
@@ -302,6 +308,14 @@ if (entry === self || entry === path.dirname(self)) {
   const host = process.env.HOST ?? '0.0.0.0';
   const dataDir = path.resolve(process.env.DATA_DIR ?? path.join(ROOT, 'data'));
   const server = createApp({ dataDir });
+  server.on('error', (e) => {
+    if (e.code !== 'EADDRINUSE') throw e;
+    console.error(
+      `Port ${port} is already in use: Retro is probably already running (for example as the ` +
+        'background service). Check with: bash scripts/service.sh status',
+    );
+    process.exit(1);
+  });
   server.listen(port, host, () => {
     console.log(`Retro running. Data: ${dataDir}`);
     console.log(`  This computer:  http://localhost:${port}`);
