@@ -45,6 +45,7 @@ button:active { opacity: 0.45; }
 .no-anim, .no-anim * { transition: none !important; animation: none !important; }
 
 .app {
+  overflow-x: clip; /* nothing may push the page sideways */
   max-width: 430px;
   margin: 0 auto;
   padding: 0 var(--side) calc(env(safe-area-inset-bottom, 0px) + 96px);
@@ -78,7 +79,7 @@ button:active { opacity: 0.45; }
 
 /* ---------- Checkbox items (shared by pinned, days, summary) */
 .items { list-style: none; margin: 0; padding: 0; }
-.item { display: flex; align-items: center; gap: 9px; min-height: 20px; }
+.item { display: flex; align-items: flex-start; gap: 9px; min-height: 20px; }
 .item.enter { animation: item-in 0.28s var(--ease); }
 @keyframes item-in { from { opacity: 0; transform: translateY(-3px); } }
 .cb {
@@ -88,6 +89,7 @@ button:active { opacity: 0.45; }
   height: 14px;
   border: 1px solid var(--black);
   border-radius: 3.5px;
+  margin-top: 3px; /* centred on the first 20px line of the task */
   transition: background-color 0.18s, border-color 0.25s, transform 0.15s;
 }
 .cb::before { content: ""; position: absolute; inset: -9px -10px; } /* bigger tap target */
@@ -96,15 +98,26 @@ button:active { opacity: 0.45; }
 .item.done .cb { background: var(--black); }
 .item.done .cb svg { opacity: 1; }
 .text {
+  /* An invisible frame: the task wraps inside its column and grows downwards. */
+  display: block;
   flex: 1;
   min-width: 0;
-  height: 20px;
+  height: 20px; /* replaced by the measured height from items.js */
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere; /* long words and links break too */
   color: inherit;
   font: inherit;
+  line-height: inherit;
   outline: none;
   caret-color: var(--black);
   transition: color 0.25s;
@@ -121,17 +134,22 @@ button:active { opacity: 0.45; }
   color: var(--grey-light);
   transition: color var(--dur) var(--ease), opacity 0.15s;
 }
+/* Pull each title left by its letter's built-in side bearing so the ink of "P" and "S"
+   starts exactly on the 24px edge shared by W45 and the dividers. */
+.pinned .section-title { margin-left: -1.9px; }
+.summary .section-title { margin-left: -0.9px; }
 .mode-pinned .pinned .section-title,
 .mode-summary .summary .section-title { color: var(--black); }
 .pinned .item, .summary .item { min-height: 23px; }
-.pinned .text, .summary .text { height: 23px; }
+.pinned .text, .summary .text { line-height: 23px; }
+.pinned .item .cb, .summary .item .cb { margin-top: 4.5px; }
+.ghost .cb { margin-top: 0; }
 .pinned .items, .summary .items { font-size: 15px; }
 
 /* ---------- Pinned for this week */
 .pinned {
   position: relative;
   margin-top: 12px;
-  padding-left: 5px;
   height: 34px;
   overflow: hidden;
   transition: height var(--dur) var(--ease);
@@ -155,12 +173,12 @@ button:active { opacity: 0.45; }
 .fab svg { width: 33px; height: 33px; fill: none; stroke: var(--white); stroke-width: 2.4; stroke-linecap: round; }
 .fab:active { opacity: 1; transform: scale(0.88); }
 /* Pinned: the button sits at the bottom-left of the open Pinned section. */
-.fab-pinned { position: absolute; left: 3px; bottom: 12px; }
+.fab-pinned { position: absolute; left: 0; bottom: 12px; }
 .mode-pinned .fab-pinned { opacity: 1; transform: none; pointer-events: auto; }
 /* Summary: the button sits at the bottom-left of the screen. */
 .fab-summary {
   position: fixed;
-  left: calc(50% - min(50vw, 215px) + 27px);
+  left: calc(50% - min(50vw, 215px) + var(--side));
   bottom: max(27px, env(safe-area-inset-bottom, 0px));
 }
 .mode-summary .fab-summary { opacity: 1; transform: none; pointer-events: auto; }
@@ -176,7 +194,7 @@ button:active { opacity: 0.45; }
   -webkit-user-select: none;
 }
 .cat-side { max-width: 100%; font-size: 18px; line-height: 30px; color: var(--grey); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cat-prev { justify-self: start; }   /* flush with the left edge of the dividers */
+.cat-prev { justify-self: start; margin-left: -1.5px; } /* ink flush with the dividers' left edge */
 .cat-next { justify-self: end; }     /* flush with the right edge */
 .cat-center { display: flex; align-items: center; gap: 15px; }
 .cat-active { font-size: 22px; line-height: 30px; white-space: nowrap; }
@@ -204,12 +222,12 @@ button:active { opacity: 0.45; }
 .day-label {
   font-size: 13px;
   line-height: 20px;
-  padding-left: 1px;
+  margin-left: -1px; /* side bearing: ink starts on the 24px edge */
   transition: font-size var(--dur) var(--ease), line-height var(--dur) var(--ease);
 }
-.day.focus .day-label { font-size: 22px; line-height: 28px; font-weight: 700; padding-left: 2px; }
+.day.focus .day-label { font-size: 22px; line-height: 28px; font-weight: 700; margin-left: -0.25px; }
 .day-label .d { white-space: nowrap; }
-.add-mini { display: none; width: 20px; height: 20px; place-items: center; margin-left: 0; position: relative; }
+.add-mini { display: none; width: 20px; height: 20px; place-items: center; margin-left: -2px; position: relative; }
 .add-mini::before { content: ""; position: absolute; inset: 0 -20px -8px -6px; }
 .add-mini svg { width: 17px; height: 17px; fill: none; stroke: var(--black); stroke-width: 1; stroke-linecap: round; }
 .day.focus .add-mini { display: grid; animation: fade-in 0.3s var(--ease); }
@@ -217,5 +235,5 @@ button:active { opacity: 0.45; }
 .day .items { font-size: 14px; }
 
 /* ---------- Summary */
-.summary { padding-left: 5px; }
+
 .summary-body { height: 0; overflow: hidden; transition: height var(--dur) var(--ease); }

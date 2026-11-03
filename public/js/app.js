@@ -5,7 +5,7 @@
 // All data and syncing lives in store.js; this file only renders and handles input.
 
 import { createStore, connectLive } from './store.js';
-import { renderItems, focusItem } from './items.js';
+import { renderItems, focusItem, autosize, autosizeAll } from './items.js';
 import { attachSwipe } from './gestures.js';
 import {
   shiftWeek,
@@ -194,7 +194,7 @@ const cssPx = (name) => parseFloat(getComputedStyle(document.documentElement).ge
 function compactRowHeight(row) {
   const first = row === track.firstElementChild;
   const last = row === track.lastElementChild;
-  const items = row.querySelectorAll('.item').length * 20;
+  const items = row.querySelector('.items').offsetHeight; // wrapped tasks can span several lines
   const natural = (first ? 8 : 7) + Math.max(items, 20) + (last ? 24 : 6) + (last ? 0 : 1);
   return Math.max(last ? 0 : cssPx('--row') + 1, natural);
 }
@@ -351,6 +351,7 @@ document.addEventListener('click', (e) => {
 });
 
 function commitText(input) {
+  if (input.value.includes('\n')) input.value = input.value.replace(/\s*\n+\s*/g, ' '); // e.g. pasted text
   const li = input.closest('.item');
   const loc = locOf(input);
   const item = store.listAt(loc).find((x) => x.id === li.dataset.id);
@@ -358,8 +359,12 @@ function commitText(input) {
 }
 
 document.addEventListener('input', (e) => {
-  // Don't commit mid-composition, or Chinese/Japanese IME input breaks.
-  if (e.target.classList.contains('text') && !e.isComposing) commitText(e.target);
+  if (!e.target.classList.contains('text')) return;
+  // Don't commit mid-composition, or Chinese/Japanese IME input breaks…
+  if (!e.isComposing) return commitText(e.target);
+  // …but still let the field grow while composing.
+  autosize(e.target);
+  layout();
 });
 document.addEventListener('compositionend', (e) => {
   if (e.target.classList.contains('text')) commitText(e.target);
@@ -403,7 +408,10 @@ body.classList.remove('mode-pinned', 'mode-day', 'mode-summary');
 body.classList.add(`mode-${ui.mode}`);
 store.subscribe(render);
 connectLive(store);
-window.addEventListener('resize', layout);
+window.addEventListener('resize', () => {
+  autosizeAll();
+  layout();
+});
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) store.flush();
   else if (store.state.weekId) render(); // date may have changed overnight

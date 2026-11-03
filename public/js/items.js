@@ -19,9 +19,11 @@ function createItem(it, animate) {
   cb.setAttribute('aria-label', 'Done');
   cb.innerHTML = CHECK;
 
-  const input = document.createElement('input');
+  // A one-row textarea that grows with its content, so long tasks wrap inside their
+  // column instead of running off the screen. Enter never inserts a newline (see app.js).
+  const input = document.createElement('textarea');
   input.className = 'text';
-  input.type = 'text';
+  input.rows = 1;
   input.enterKeyHint = 'next';
   input.autocomplete = 'off';
   input.setAttribute('autocapitalize', 'sentences');
@@ -39,6 +41,16 @@ function updateItem(li, it) {
   if (input.value !== it.text && document.activeElement !== input) input.value = it.text;
 }
 
+/** Fit a task's textarea to its wrapped text. */
+export function autosize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = `${ta.scrollHeight}px`;
+}
+
+export function autosizeAll(root = document) {
+  root.querySelectorAll('textarea.text').forEach(autosize);
+}
+
 /** Make `ul` show `items` (each with a stable client `id`). */
 export function renderItems(ul, items, { animate = true } = {}) {
   const existing = new Map();
@@ -54,6 +66,7 @@ export function renderItems(ul, items, { animate = true } = {}) {
     else ul.insertBefore(li, ref);
   }
   for (const li of existing.values()) li.remove();
+  autosizeAll(ul);
 }
 
 export function focusItem(id, atEnd = true) {
