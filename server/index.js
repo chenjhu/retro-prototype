@@ -52,8 +52,24 @@ function appVersion() {
   return hash.digest('hex').slice(0, 12);
 }
 
+/** Keep a copy of the format guide (checkbox rules, abbreviations…) inside the data
+ *  folder, so an agent given only that folder knows how to read it. */
+function writeDataReadme(dataDir) {
+  const guide = fs.readFileSync(path.join(ROOT, 'docs', 'DATA_FORMAT.md'), 'utf8');
+  const text =
+    '<!-- Written by Retro on startup from docs/DATA_FORMAT.md in the app. Edits here are overwritten. -->\n\n' + guide;
+  const dest = path.join(dataDir, 'README.md');
+  try {
+    if (fs.existsSync(dest) && fs.readFileSync(dest, 'utf8') === text) return;
+    fs.writeFileSync(dest, text);
+  } catch (e) {
+    console.warn(`Could not write ${dest}: ${e.message}`);
+  }
+}
+
 export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
   fs.mkdirSync(dataDir, { recursive: true });
+  writeDataReadme(dataDir);
   const APP = appVersion();
   const fileFor = (id) => path.join(dataDir, `${id}.md`);
   const clients = new Set();

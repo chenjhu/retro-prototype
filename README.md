@@ -47,6 +47,17 @@ npm start
 - 第二天打开时自动跳到当天；周一早上自动切到新的一周。
 - **自动更新**：主屏幕上的 App 回到前台时，如果服务端代码有更新，会先保存再自动刷新；后台期间别处改过的数据也会同步过来。
 
+## 记录约定
+
+| 写法 | 含义 |
+|---|---|
+| `- [ ] 名字 · 机构` | 已联系（找到人、准备写信、已发送、已加 LinkedIn），还没回复 |
+| `- [x] 名字 · 机构` | 对方回复了 / 关系建立了 |
+| `(L)` | 在 LinkedIn 上沟通 |
+| `(LC)` | 只在 LinkedIn 发了 connection 请求 |
+
+完整说明在 [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md)。平台每次启动时会把它复制到数据文件夹里，存成 `README.md`，所以只拿到数据文件夹的 AI 也能看懂这些约定。新增缩写的话告诉 Claude，加到这份说明里即可。
+
 ## 批量导入
 
 把要加的内容按平台格式写进一个 `.md` 文件（只写需要的部分即可，例如某一天的 `### Work`），在平台运行时执行：
@@ -74,6 +85,6 @@ node ~/Projects/retro-prototype/scripts/merge.js 文件路径.md
 | `server/` | 本地服务：读写 Markdown、JSON API、文件监听、静态页面 |
 | `shared/` | 周日期计算、数据模型、Markdown 解析与生成（服务端和浏览器共用） |
 | `public/` | 网页：`index.html`，`css/`，`js/`（`store.js` 数据与同步，`app.js` 交互，`items.js` 列表渲染，`gestures.js` 滑动），`icons/` |
-| `data/` | 你的数据（运行时自动创建；不进 git） |
+| `data/` | 你的数据（运行时自动创建；不进 git）。里面的 `README.md` 是自动生成的格式说明 |
 | `docs/` | 数据格式说明，`design/` 设计稿 |
 | `test/` | 自动测试：`npm test` |

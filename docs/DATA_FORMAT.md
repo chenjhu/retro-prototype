@@ -75,6 +75,19 @@ So an unchecked outreach line on a past day is a pending follow-up. When summari
 planning, read `[x]` on these lines as "replied", not "done". For ordinary tasks
 (e.g. "Problem set 3"), `[x]` still simply means done.
 
+## Abbreviations
+
+Short tags the user writes inside a task line, usually at the end:
+
+| Tag | Meaning |
+|---|---|
+| `(L)` | In contact on LinkedIn: messages sent or exchanged there |
+| `(LC)` | LinkedIn connection request sent only, no message yet |
+
+Together with the checkbox: `- [ ] Name · Org (LC)` = request sent, not accepted yet;
+`- [x] Name · Org (LC)` = they accepted / responded. Example:
+`- [x] Martin Jakob · TEP 实习 (L)` = talking with him on LinkedIn, and he replied.
+
 ## Compatibility promise
 
 Files written by any earlier version must keep loading with nothing lost. Fixtures of

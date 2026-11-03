@@ -5,6 +5,8 @@
 - For outreach lines (a person or organisation), `[ ]` = contacted, no reply yet and
   `[x]` = they replied / relationship established. See "What a checkbox means for
   outreach" in `docs/DATA_FORMAT.md` before summarising or planning from the data.
+- Tags in task text: `(L)` = in contact on LinkedIn, `(LC)` = LinkedIn connection
+  request only. Full list under "Abbreviations" in `docs/DATA_FORMAT.md`.
 - To add tasks, prefer `node scripts/merge.js <file.md>` while the server runs: it only
   appends (skips tasks already present), so it can't clobber the user's data. Otherwise
   edit the Markdown file following that format, or use the HTTP API documented there.

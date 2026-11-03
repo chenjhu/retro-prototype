@@ -20,6 +20,15 @@ after(() => {
   fs.rmSync(dataDir, { recursive: true, force: true });
 });
 
+test('the data folder gets a README with the format guide, and it is not a week', async () => {
+  const readme = fs.readFileSync(path.join(dataDir, 'README.md'), 'utf8');
+  assert.match(readme, /## Abbreviations/);
+  assert.match(readme, /`\(LC\)`/);
+  assert.match(readme, /What a checkbox means for outreach/);
+  const { weeks } = await (await fetch(`${base}/api/weeks`)).json();
+  assert.ok(!weeks.includes('README'));
+});
+
 test('GET a missing week returns an empty template without creating a file', async () => {
   const res = await fetch(`${base}/api/weeks/2026-W40`);
   const body = await res.json();
