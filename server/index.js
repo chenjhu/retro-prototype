@@ -36,8 +36,25 @@ const versionOf = (text) =>
 
 const BACKUP_DAYS = 30;
 
+/** Fingerprint of the web app's code. Changes whenever public/ or shared/ change, so
+ *  open pages (including ones added to the iPhone home screen) know to reload. */
+function appVersion() {
+  const hash = crypto.createHash('sha1');
+  const walk = (dir) => {
+    for (const name of fs.readdirSync(dir).sort()) {
+      const p = path.join(dir, name);
+      if (fs.statSync(p).isDirectory()) walk(p);
+      else hash.update(name).update(fs.readFileSync(p));
+    }
+  };
+  walk(path.join(ROOT, 'public'));
+  walk(path.join(ROOT, 'shared'));
+  return hash.digest('hex').slice(0, 12);
+}
+
 export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
   fs.mkdirSync(dataDir, { recursive: true });
+  const APP = appVersion();
   const fileFor = (id) => path.join(dataDir, `${id}.md`);
   const clients = new Set();
 
@@ -167,6 +184,7 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
 
     if (p === '/api/config' && req.method === 'GET') {
       return send(res, 200, {
+        app: APP,
         today: todayLocal(),
         currentWeek: currentWeekId(),
         defaultCategories: DEFAULT_CATEGORIES,
@@ -228,6 +246,7 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
         Connection: 'keep-alive',
       });
       res.write('retry: 2000\n\n');
+      res.write(`event: hello\ndata: ${JSON.stringify({ app: APP })}\n\n`);
       clients.add(res);
       const ping = setInterval(() => res.write(': ping\n\n'), 25000);
       req.on('close', () => {

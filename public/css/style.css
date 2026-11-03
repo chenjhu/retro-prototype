@@ -48,7 +48,7 @@ button:active { opacity: 0.45; }
   overflow-x: clip; /* nothing may push the page sideways */
   max-width: 430px;
   margin: 0 auto;
-  padding: 0 var(--side) calc(env(safe-area-inset-bottom, 0px) + 96px);
+  padding: 0 var(--side) calc(env(safe-area-inset-bottom, 0px) + 48px);
 }
 
 /* ---------- Header: "W45 2026"  ...  "3 x (✓)" */
@@ -175,12 +175,8 @@ button:active { opacity: 0.45; }
 /* Pinned: the button sits at the bottom-left of the open Pinned section. */
 .fab-pinned { position: absolute; left: 0; bottom: 12px; }
 .mode-pinned .fab-pinned { opacity: 1; transform: none; pointer-events: auto; }
-/* Summary: the button sits at the bottom-left of the screen. */
-.fab-summary {
-  position: fixed;
-  left: calc(50% - min(50vw, 215px) + var(--side));
-  bottom: max(27px, env(safe-area-inset-bottom, 0px));
-}
+/* Summary: the button follows the last summary point (never covers it). */
+.fab-summary { margin: 14px 0 6px; }
 .mode-summary .fab-summary { opacity: 1; transform: none; pointer-events: auto; }
 
 /* ---------- Category switcher: "Academic   < Work >   Personal" */
@@ -223,7 +219,7 @@ button:active { opacity: 0.45; }
   font-size: 13px;
   line-height: 20px;
   margin-left: -1px; /* side bearing: ink starts on the 24px edge */
-  transition: font-size var(--dur) var(--ease), line-height var(--dur) var(--ease);
+  transition: font-size var(--dur) var(--ease), line-height var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .day.focus .day-label { font-size: 22px; line-height: 28px; font-weight: 700; margin-left: -0.25px; }
 .day-label .d { white-space: nowrap; }
@@ -231,6 +227,12 @@ button:active { opacity: 0.45; }
 .add-mini::before { content: ""; position: absolute; inset: 0 -20px -8px -6px; }
 .add-mini svg { width: 17px; height: 17px; fill: none; stroke: var(--black); stroke-width: 1; stroke-linecap: round; }
 .day.focus .add-mini { display: grid; animation: fade-in 0.3s var(--ease); }
+
+/* Days that are over step back into grey, so today is the first black row.
+   Tasks left unfinished stay black: they're what still needs attention.
+   Tapping a past day (focus) brings it back to full black for editing. */
+.day.past:not(.focus) .day-label { color: var(--grey); }
+.day.past:not(.focus) .item.done .cb { background: var(--grey); border-color: var(--grey); }
 @keyframes fade-in { from { opacity: 0; } }
 .day .items { font-size: 14px; }
 

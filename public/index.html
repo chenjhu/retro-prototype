@@ -66,14 +66,16 @@
       <section class="summary" id="summary" aria-label="Summary">
         <button type="button" class="section-title" data-mode="summary">Summary</button>
         <div class="summary-body" id="summary-body">
-          <ul class="items" data-loc="summary"></ul>
+          <div class="summary-inner">
+            <ul class="items" data-loc="summary"></ul>
+            <!-- Follows the list, so it never covers a summary point. -->
+            <button type="button" class="fab fab-summary" data-add="summary" aria-label="Add summary point" tabindex="-1">
+              <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 10.5v13M10.5 17h13" /></svg>
+            </button>
+          </div>
         </div>
       </section>
     </div>
-
-    <button type="button" class="fab fab-summary" data-add="summary" aria-label="Add summary point" tabindex="-1">
-      <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 10.5v13M10.5 17h13" /></svg>
-    </button>
 
     <script type="module" src="/js/app.js"></script>
   </body>

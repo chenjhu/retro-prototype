@@ -177,6 +177,20 @@ export function createStore({ api = createApi(), saveDelay = 400 } = {}) {
     if (ops.length || inflight) await save();
   }
 
+  /** Re-check the server (e.g. when the app comes back to the foreground). */
+  async function refresh() {
+    if (!state.weekId) return;
+    if (ops.length || inflight) return save(); // a conflict there merges in remote changes
+    try {
+      const w = await api.getWeek(state.weekId);
+      if (w.version !== state.version && !ops.length && !inflight && w.week === state.weekId) {
+        set({ status: 'ready', error: null, week: withIds(w), version: w.version });
+      }
+    } catch (e) {
+      set({ status: 'offline', error: e.message });
+    }
+  }
+
   /** Call when the server reports that a week file changed on disk. */
   function onRemoteChange({ week, version }) {
     if (week !== state.weekId || version === state.version) return;
@@ -200,6 +214,7 @@ export function createStore({ api = createApi(), saveDelay = 400 } = {}) {
     },
     load,
     flush,
+    refresh,
     onRemoteChange,
     get hasUnsaved() {
       return ops.length > 0 || Boolean(inflight);
@@ -231,9 +246,15 @@ export function createStore({ api = createApi(), saveDelay = 400 } = {}) {
 }
 
 /** Browser only: subscribe to server-sent file-change events. */
-export function connectLive(store, base = '') {
+export function connectLive(store, { base = '', onHello } = {}) {
   if (typeof EventSource === 'undefined') return () => {};
   const es = new EventSource(`${base}/api/events`);
   es.addEventListener('week-changed', (e) => store.onRemoteChange(JSON.parse(e.data)));
+  // Sent on every (re)connect: carries the app version, and is the moment to catch up
+  // on anything missed while the connection was down.
+  es.addEventListener('hello', (e) => {
+    onHello?.(JSON.parse(e.data));
+    store.refresh();
+  });
   return () => es.close();
 }

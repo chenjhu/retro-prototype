@@ -78,6 +78,22 @@ test('raw Markdown and export endpoints', async () => {
   assert.ok(exp.weeks.map((w) => w.week).includes(ID));
 });
 
+test('config and live stream announce the app version', async () => {
+  const cfg = await (await fetch(`${base}/api/config`)).json();
+  assert.match(cfg.app, /^[0-9a-f]{12}$/);
+  const ctrl = new AbortController();
+  const res = await fetch(`${base}/api/events`, { signal: ctrl.signal });
+  const reader = res.body.getReader();
+  let text = '';
+  try {
+    while (!text.includes('event: hello')) text += new TextDecoder().decode((await reader.read()).value);
+    while (!text.includes('\n\n', text.indexOf('event: hello'))) text += new TextDecoder().decode((await reader.read()).value);
+  } finally {
+    ctrl.abort();
+  }
+  assert.ok(text.includes(`"app":"${cfg.app}"`));
+});
+
 test('rejects bad ids and path traversal', async () => {
   assert.equal((await fetch(`${base}/api/weeks/2026-W99`)).status, 400);
   assert.equal((await fetch(`${base}/api/weeks/..%2F..%2Fetc`)).status, 404);

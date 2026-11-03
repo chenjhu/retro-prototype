@@ -11,6 +11,7 @@ import {
   shiftWeek,
   weekdayIndex,
   weekDates,
+  weekIdOf,
   isValidWeekId,
   WEEKDAY_SHORT,
   todayLocal,
@@ -176,6 +177,7 @@ function renderDays() {
     const date = row.dataset.date;
     const day = week.days.find((d) => d.date === date);
     row.classList.toggle('today', date === today);
+    row.classList.toggle('past', date < today);
     row.classList.toggle('focus', ui.mode === 'day' && date === ui.focusDate);
     const ul = row.querySelector('.items');
     const key = encodeLoc(dayLoc(date));
@@ -407,16 +409,56 @@ body.classList.add('no-anim');
 body.classList.remove('mode-pinned', 'mode-day', 'mode-summary');
 body.classList.add(`mode-${ui.mode}`);
 store.subscribe(render);
-connectLive(store);
+
+// ---------- Staying current
+// A page added to the iPhone home screen is never reloaded by iOS: it is just woken up
+// from the background. So when the server is running newer code than this page, save
+// and reload; and whenever the app comes back, catch up on data and on the date.
+
+let loadedApp = null;
+async function checkApp(app) {
+  if (!app) return;
+  if (loadedApp === null) loadedApp = app;
+  else if (app !== loadedApp) {
+    await store.flush();
+    location.reload();
+  }
+}
+connectLive(store, { onHello: ({ app }) => checkApp(app) });
+
+let lastToday = todayLocal();
+function checkDate() {
+  const today = todayLocal();
+  if (today === lastToday) return;
+  const was = lastToday;
+  lastToday = today;
+  const viewing = store.state.weekId;
+  // The week rolled over while showing "this week": follow it to the new week.
+  if (viewing && viewing === weekIdOf(was) && viewing !== currentWeekId()) {
+    openWeek(currentWeekId(), 1);
+    return;
+  }
+  if (ui.focusDate === was) ui.focusDate = today; // keep "today" in focus
+  render();
+}
+
+async function onForeground() {
+  checkDate();
+  store.refresh();
+  try {
+    const cfg = await (await fetch('/api/config', { cache: 'no-store' })).json();
+    checkApp(cfg.app);
+  } catch {}
+}
+
 window.addEventListener('resize', () => {
   autosizeAll();
   layout();
 });
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) store.flush();
-  else if (store.state.weekId) render(); // date may have changed overnight
-});
+document.addEventListener('visibilitychange', () => (document.hidden ? store.flush() : onForeground()));
+window.addEventListener('pageshow', (e) => e.persisted && onForeground());
 window.addEventListener('pagehide', () => store.flush());
+setInterval(checkDate, 60 * 1000); // midnight while the app is open
 
 const fromHash = location.hash.slice(1);
 openWeek(/^\d{4}-W\d{2}$/.test(fromHash) ? fromHash : currentWeekId()).then(() => {
