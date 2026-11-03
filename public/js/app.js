@@ -204,7 +204,8 @@ function layout() {
   const box = $('pinned');
   const inner = $('pinned-inner');
   const closed = box.querySelector('.section-title').offsetHeight;
-  const open = Math.max(closed + cssPx('--focus-extra'), inner.offsetHeight);
+  // Leave room under the list for the ● + button (33px tall, 12px from the bottom).
+  const open = Math.max(closed + cssPx('--focus-extra'), inner.offsetHeight + 33 + 12 + 10);
   box.style.height = `${ui.mode === 'pinned' ? open : closed}px`;
 
   // The focused day takes exactly the space Pinned gives up when it closes, so the rows
@@ -334,9 +335,7 @@ function addAndFocus(loc, index) {
 document.addEventListener('click', (e) => {
   const t = e.target;
   let el;
-  if (t.closest('#fab')) {
-    if (ui.mode === 'pinned' || ui.mode === 'summary') addAndFocus({ list: ui.mode });
-  } else if ((el = t.closest('.item .cb'))) {
+  if ((el = t.closest('.item .cb'))) {
     store.toggle(locOf(el), el.closest('.item').dataset.id);
   } else if ((el = t.closest('[data-add]'))) {
     addAndFocus({ list: el.dataset.add });

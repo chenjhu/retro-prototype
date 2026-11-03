@@ -129,6 +129,7 @@ button:active { opacity: 0.45; }
 
 /* ---------- Pinned for this week */
 .pinned {
+  position: relative;
   margin-top: 12px;
   padding-left: 5px;
   height: 34px;
@@ -140,9 +141,6 @@ button:active { opacity: 0.45; }
 .ghost:active .cb { transform: scale(0.82); }
 
 .fab {
-  position: fixed;
-  left: calc(50% - min(50vw, 215px) + 27px);
-  bottom: max(27px, env(safe-area-inset-bottom, 0px));
   width: 33px;
   height: 33px;
   border-radius: 50%;
@@ -155,8 +153,17 @@ button:active { opacity: 0.45; }
   transition: opacity 0.25s var(--ease), transform var(--dur) var(--ease);
 }
 .fab svg { width: 33px; height: 33px; fill: none; stroke: var(--white); stroke-width: 2.4; stroke-linecap: round; }
-.mode-pinned .fab, .mode-summary .fab { opacity: 1; transform: none; pointer-events: auto; }
 .fab:active { opacity: 1; transform: scale(0.88); }
+/* Pinned: the button sits at the bottom-left of the open Pinned section. */
+.fab-pinned { position: absolute; left: 3px; bottom: 12px; }
+.mode-pinned .fab-pinned { opacity: 1; transform: none; pointer-events: auto; }
+/* Summary: the button sits at the bottom-left of the screen. */
+.fab-summary {
+  position: fixed;
+  left: calc(50% - min(50vw, 215px) + 27px);
+  bottom: max(27px, env(safe-area-inset-bottom, 0px));
+}
+.mode-summary .fab-summary { opacity: 1; transform: none; pointer-events: auto; }
 
 /* ---------- Category switcher: "Academic   < Work >   Personal" */
 .switcher {
