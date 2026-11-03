@@ -68,7 +68,7 @@ button:active { opacity: 0.45; }
 
 /* ---------- Week picker: two drum wheels folding out under the title */
 .picker { height: 0; overflow: hidden; transition: height var(--dur) var(--ease); }
-.picker-inner { padding: 10px 0 4px; }
+.picker-inner { padding: 10px 0 6px; }
 .wheels {
   position: relative;
   display: flex;
@@ -115,18 +115,19 @@ button:active { opacity: 0.45; }
   border-bottom: 0.5px solid var(--grey);
   pointer-events: none;
 }
-.picker-foot {
-  display: flex;
-  justify-content: space-between;
-  width: 216px;
-  margin: 8px auto 0;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--grey);
-  font-variant-numeric: tabular-nums;
+/* Back to this week: a circled arrow drawn exactly like the day ⊕ (17px, 1px line),
+   on the page's left edge, level with the selected row. */
+.picker-now {
+  position: absolute;
+  left: 0;
+  top: calc(68px + (34px - 17px) / 2);
+  width: 17px;
+  height: 17px;
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
 }
-#picker-now { color: var(--black); transition: opacity 0.2s; }
-#picker-now[hidden] { display: inline; visibility: hidden; }
+.picker-now::before { content: ""; position: absolute; inset: -12px; } /* comfortable tap target */
+.picker-now svg { display: block; width: 17px; height: 17px; fill: none; stroke: var(--black); stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; }
+.picker-now[hidden] { display: block; opacity: 0; transform: scale(0.7); pointer-events: none; }
 .sync { flex: 1; text-align: center; font-size: 12px; color: var(--grey); }
 .done-count { display: flex; align-items: baseline; font-size: 20px; line-height: 34px; }
 .done-count .times { white-space: pre; margin-right: 7px; }

@@ -11,7 +11,6 @@ import { createWheel } from './wheel.js';
 import {
   shiftWeek,
   weekdayIndex,
-  weekDates,
   weekIdOf,
   isValidWeekId,
   WEEKDAY_SHORT,
@@ -92,7 +91,6 @@ function render() {
 
 // ---------- Week picker: tap "W45 2026" to fold out two wheels (week, year)
 
-const md = (date) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
 const makeWeekId = (year, week) => `${year}-W${String(week).padStart(2, '0')}`;
 const weeksIn = (year) => (isValidWeekId(makeWeekId(year, 53)) ? 53 : 52);
 let pickerOpen = false;
@@ -135,8 +133,6 @@ function renderPicker(id) {
     fillWeekWheel(year);
     weekWheel.setValue(week);
   }
-  const d = weekDates(id);
-  $('picker-range').textContent = `${md(d[0])} – ${md(d[6])}`;
   $('picker-now').hidden = id === currentWeekId();
 }
 

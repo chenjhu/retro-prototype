@@ -39,10 +39,10 @@
             <div class="wheel" id="wheel-week" aria-label="Week"></div>
             <div class="wheel" id="wheel-year" aria-label="Year"></div>
             <div class="wheel-band" aria-hidden="true"></div>
-          </div>
-          <div class="picker-foot">
-            <span id="picker-range"></span>
-            <button type="button" id="picker-now">This week</button>
+            <!-- Back to this week: same circle as the day ⊕, shown only when elsewhere. -->
+            <button type="button" class="picker-now" id="picker-now" aria-label="Back to this week" hidden>
+              <svg viewBox="0 0 17 17" aria-hidden="true"><circle cx="8.5" cy="8.5" r="8" /><path d="M5 8.5h7M9.2 5.7 12 8.5l-2.8 2.8" /></svg>
+            </button>
           </div>
         </div>
       </div>
