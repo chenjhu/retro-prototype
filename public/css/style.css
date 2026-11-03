@@ -332,3 +332,46 @@ button:active { opacity: 0.45; }
 /* ---------- Summary */
 
 .summary-body { height: 0; overflow: hidden; transition: height var(--dur) var(--ease); }
+
+/* ---------- Desktop (wide screens): every category side by side.
+   Everything below only applies from 900px; phones never see it. */
+.col-heads { display: none; }
+
+@media (min-width: 900px) {
+  :root {
+    --side: 48px;
+    --label-col: 96px;
+    --col-gap: 32px;
+  }
+  .app { max-width: 1180px; }
+
+  /* Column headings replace the swipe switcher. */
+  .switcher { display: none; }
+  .col-heads {
+    display: grid;
+    grid-template-columns: var(--label-col) repeat(var(--cats, 3), minmax(0, 1fr));
+    column-gap: var(--col-gap);
+    align-items: center;
+    height: 30px;
+    margin-top: 14px;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .col-head { font-size: 22px; line-height: 30px; margin-left: -1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Each day row: label, then one cell per category, on the same grid as the headings. */
+  .day { grid-template-columns: var(--label-col) repeat(var(--cats, 3), minmax(0, 1fr)); column-gap: var(--col-gap); }
+  .cell { min-width: 0; }
+  .day.focus .add-mini { display: none; } /* desktop adds per column instead */
+  .add-cell { display: none; width: 20px; height: 20px; place-items: center; margin-left: -1.5px; position: relative; }
+  .add-cell::before { content: ""; position: absolute; inset: -6px -14px -8px -6px; }
+  .add-cell svg { width: 17px; height: 17px; fill: none; stroke: var(--black); stroke-width: 1; stroke-linecap: round; }
+  .day.focus .add-cell { display: grid; animation: fade-in 0.3s var(--ease); }
+
+  /* Pinned and Summary keep a readable line length on a wide screen. */
+  .pinned .items, .summary .items { max-width: 720px; }
+
+  /* Week picker sits under the title instead of in the middle of a wide page. */
+  .wheels { justify-content: flex-start; padding-left: 41px; }
+  .wheel-band { left: 41px; width: 200px; transform: none; }
+}

@@ -177,26 +177,63 @@ function renderSwitcher() {
   $('cat-active').textContent = cats[i] ?? '';
   $('cat-prev').textContent = n > 1 ? cats[(i - 1 + n) % n] : '';
   $('cat-next').textContent = n > 2 ? cats[(i + 1) % n] : '';
+  // Desktop: one heading per column instead of the switcher.
+  const heads = $('col-heads');
+  if (isDesktop() && heads.dataset.cats !== cats.join('|')) {
+    heads.dataset.cats = cats.join('|');
+    heads.replaceChildren(
+      document.createElement('span'), // above the day labels
+      ...cats.map((c) => Object.assign(document.createElement('span'), { className: 'col-head', textContent: c })),
+    );
+  }
+}
+
+// ---------- Desktop: wide screens show every category side by side.
+// Phones keep the one-category-at-a-time layout exactly as before.
+
+const desktopMQ = matchMedia('(min-width: 900px)');
+const isDesktop = () => desktopMQ.matches;
+desktopMQ.addEventListener('change', () => {
+  track.dataset.week = ''; // rebuild the rows for the other layout
+  $('col-heads').dataset.cats = '';
+  render();
+});
+
+function dayRowHTML(date, cats) {
+  const [, m, dd] = date.split('-');
+  const side = `
+    <div class="day-side">
+      <button type="button" class="day-label"><span class="d">${WEEKDAY_SHORT[weekdayIndex(date)]}</span> <span class="d">${Number(m)}/${Number(dd)}</span></button>
+      <button type="button" class="add-mini" aria-label="Add task">${PLUS_SMALL}</button>
+    </div>`;
+  if (!cats) return `${side}<ul class="items"></ul>`; // phone
+  return (
+    side +
+    cats
+      .map(
+        (c) => `<div class="cell" data-cat="${c.replace(/"/g, '&quot;')}"><ul class="items"></ul>` +
+          `<button type="button" class="add-cell" aria-label="Add task">${PLUS_SMALL}</button></div>`,
+      )
+      .join('')
+  );
 }
 
 function renderDays() {
   const { week } = store.state;
   const today = todayLocal();
-  // Key on the data's own week id: while a new week is loading, state.week is still the old one.
-  if (track.dataset.week !== week.week) {
-    track.dataset.week = week.week;
+  const desktop = isDesktop();
+  // Key on the data's own week id (while a new week is loading, state.week is still the
+  // old one) and, on desktop, on the set of columns.
+  const layoutKey = desktop ? `${week.week}|${week.categories.join('|')}` : week.week;
+  if (track.dataset.week !== layoutKey) {
+    track.dataset.week = layoutKey;
+    document.documentElement.style.setProperty('--cats', week.categories.length); // shared with the headings
     track.replaceChildren(
       ...week.days.map((d) => {
         const row = document.createElement('div');
         row.className = 'day';
         row.dataset.date = d.date;
-        const [, m, dd] = d.date.split('-');
-        row.innerHTML = `
-          <div class="day-side">
-            <button type="button" class="day-label"><span class="d">${WEEKDAY_SHORT[weekdayIndex(d.date)]}</span> <span class="d">${Number(m)}/${Number(dd)}</span></button>
-            <button type="button" class="add-mini" aria-label="Add task">${PLUS_SMALL}</button>
-          </div>
-          <ul class="items"></ul>`;
+        row.innerHTML = dayRowHTML(d.date, desktop ? week.categories : null);
         return row;
       }),
     );
@@ -207,14 +244,16 @@ function renderDays() {
     row.classList.toggle('today', date === today);
     row.classList.toggle('past', date < today);
     row.classList.toggle('focus', ui.mode === 'day' && date === ui.focusDate);
-    const ul = row.querySelector('.items');
-    const key = encodeLoc(dayLoc(date));
-    const switched = ul.dataset.loc !== key;
-    if (switched) {
-      ul.dataset.loc = key;
-      ul.replaceChildren();
+    for (const ul of row.querySelectorAll('.items')) {
+      const category = desktop ? ul.parentElement.dataset.cat : ui.category;
+      const key = encodeLoc({ list: 'day', date, category });
+      const switched = ul.dataset.loc !== key;
+      if (switched) {
+        ul.dataset.loc = key;
+        ul.replaceChildren();
+      }
+      renderItems(ul, day.items[category] ?? [], { animate: !switched });
     }
-    renderItems(ul, day.items[ui.category] ?? [], { animate: !switched });
   }
 }
 
@@ -224,7 +263,8 @@ const cssPx = (name) => parseFloat(getComputedStyle(document.documentElement).ge
 function compactRowHeight(row) {
   const first = row === track.firstElementChild;
   const last = row === track.lastElementChild;
-  const items = row.querySelector('.items').offsetHeight; // wrapped tasks can span several lines
+  // wrapped tasks can span several lines; on desktop the tallest column counts
+  const items = Math.max(...[...row.querySelectorAll('.items')].map((ul) => ul.offsetHeight));
   const natural = (first ? 8 : 7) + Math.max(items, 20) + (last ? 24 : 6) + (last ? 0 : 1);
   return Math.max(last ? 0 : cssPx('--row') + 1, natural);
 }
@@ -313,13 +353,13 @@ async function changeCategory(step, fromDx = 0) {
 
 attachSwipe($('days'), {
   onMove: (dx) => {
-    if (animating) return;
+    if (animating || isDesktop()) return; // every category is already visible on desktop
     const w = track.offsetWidth;
     track.style.transform = `translateX(${dx}px)`;
     track.style.opacity = String(1 - Math.min(0.7, Math.abs(dx) / w));
   },
   onEnd: (dir, dx) => {
-    if (animating) return;
+    if (animating || isDesktop()) return;
     track.style.transform = '';
     track.style.opacity = '';
     if (dir) changeCategory(dir, dx);
@@ -378,6 +418,8 @@ document.addEventListener('click', (e) => {
     addAndFocus({ list: el.dataset.add });
   } else if ((el = t.closest('.add-mini'))) {
     addAndFocus(dayLoc(el.closest('.day').dataset.date));
+  } else if ((el = t.closest('.add-cell'))) {
+    addAndFocus({ list: 'day', date: el.closest('.day').dataset.date, category: el.closest('.cell').dataset.cat });
   } else if ((el = t.closest('.day-label'))) {
     setMode('day', el.closest('.day').dataset.date);
   } else if ((el = t.closest('[data-mode]'))) {
