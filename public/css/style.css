@@ -140,11 +140,13 @@ button:active { opacity: 0.45; }
 .summary .section-title { margin-left: -0.9px; }
 .mode-pinned .pinned .section-title,
 .mode-summary .summary .section-title { color: var(--black); }
-.pinned .item, .summary .item { min-height: 23px; }
-.pinned .text, .summary .text { line-height: 23px; }
-.pinned .item .cb, .summary .item .cb { margin-top: 4.5px; }
+.pinned .item { min-height: 23px; }
+.pinned .text { line-height: 23px; }
+.pinned .item .cb { margin-top: 4.5px; }
 .ghost .cb { margin-top: 0; }
-.pinned .items, .summary .items { font-size: 15px; }
+.pinned .items { font-size: 15px; }
+/* Summary points use the same size as the day tasks: 14px on 20px lines. */
+.summary .items { font-size: 14px; }
 
 /* ---------- Pinned for this week */
 .pinned {
