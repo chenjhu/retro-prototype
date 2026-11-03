@@ -60,6 +60,21 @@ Rules:
 Renamed categories: older files may use an old name; it is read as the new one
 (`Academics` → `Academic`). The list lives in `CATEGORY_ALIASES` in `shared/model.js`.
 
+## What a checkbox means for outreach
+
+Many tasks are people or organisations the user is reaching out to (an email, a
+LinkedIn message, an application). For these, the checkbox records whether the other
+side has engaged, not whether the user did something:
+
+| Line | Meaning |
+|---|---|
+| `- [ ] Name · Org …` | Contact made or planned: found them, drafting, sent, or connected. No reply yet |
+| `- [x] Name · Org …` | They replied, or a real exchange / relationship has started |
+
+So an unchecked outreach line on a past day is a pending follow-up. When summarising or
+planning, read `[x]` on these lines as "replied", not "done". For ordinary tasks
+(e.g. "Problem set 3"), `[x]` still simply means done.
+
 ## Compatibility promise
 
 Files written by any earlier version must keep loading with nothing lost. Fixtures of

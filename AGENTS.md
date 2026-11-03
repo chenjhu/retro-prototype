@@ -2,6 +2,9 @@
 
 - The user's weekly plans live in `data/YYYY-Www.md` (or `$DATA_DIR`). The format is in
   `docs/DATA_FORMAT.md`. Read those files directly; no server needed.
+- For outreach lines (a person or organisation), `[ ]` = contacted, no reply yet and
+  `[x]` = they replied / relationship established. See "What a checkbox means for
+  outreach" in `docs/DATA_FORMAT.md` before summarising or planning from the data.
 - To add tasks, prefer `node scripts/merge.js <file.md>` while the server runs: it only
   appends (skips tasks already present), so it can't clobber the user's data. Otherwise
   edit the Markdown file following that format, or use the HTTP API documented there.
