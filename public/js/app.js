@@ -167,7 +167,8 @@ function busiestCategory(week) {
 function renderSync() {
   const { status, error } = store.state;
   $('sync').textContent =
-    status === 'offline' ? 'offline · will retry' : status === 'error' ? `error: ${error}` : '';
+    // Offline is fine: edits are kept on this device and sent when the Mac is back.
+    status === 'offline' ? 'offline' : status === 'error' ? `error: ${error}` : '';
 }
 
 function renderSwitcher() {
@@ -564,6 +565,13 @@ window.addEventListener('resize', () => {
 document.addEventListener('visibilitychange', () => (document.hidden ? store.flush() : onForeground()));
 window.addEventListener('pageshow', (e) => e.persisted && onForeground());
 window.addEventListener('pagehide', () => store.flush());
+window.addEventListener('online', () => store.refresh()); // send waiting edits right away
+
+// Keep the app's files on the device so it opens without the Mac. Browsers only allow
+// this over HTTPS (or on localhost), e.g. via Tailscale's https://… address.
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 setInterval(checkDate, 60 * 1000); // midnight while the app is open
 
 const fromHash = location.hash.slice(1);

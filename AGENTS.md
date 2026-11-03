@@ -14,7 +14,10 @@
 - Code layout:
   - `server/index.js`: zero-dependency Node server (files, JSON API, live events, static files)
   - `shared/`: week math, data model, Markdown parser/serializer (used by server and browser)
-  - `public/js/store.js`: client state, autosave, conflict merge (UI-agnostic)
+  - `public/js/store.js`: client state, autosave, conflict merge, offline copy + unsent edits in
+    localStorage (`retro.week.<id>`), sent later via `syncPending()` (UI-agnostic)
+  - `public/sw.js`: service worker, network-first cache of the app's own files (never data)
+  - `scripts/service.sh`: macOS launchd background service
   - `public/js/app.js`: view controller (modes, gestures); `items.js` keyed list rendering
   - `public/css/style.css`: UI, measured from the Figma mock-ups (`docs/design/`)
 - Tests: `npm test`.

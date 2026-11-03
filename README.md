@@ -47,8 +47,27 @@ bash ~/Projects/retro-prototype/scripts/service.sh install "$HOME/路径/到/dat
 | `bash scripts/service.sh uninstall` | 卸载后台服务，`retro` 恢复成在终端里运行；数据不受影响 |
 
 注意：
-- Mac **睡眠或关机**时手机连不上。想合上屏幕也能用，在「系统设置 → 电池 → 选项」里打开「接通电源时防止自动进入睡眠」。
+- Mac **睡眠或关机**时手机连不上 Mac，但有了下面的离线模式，手机照样能用，连上后自动同步。
 - 如果日志提示 macOS 不允许访问数据文件夹（OneDrive 里的文件夹可能会这样），在「系统设置 → 隐私与安全性 → 完全磁盘访问权限」里加入 `node`，然后运行 `retro`。
+
+## 离线模式
+
+- **改动先存在设备上**：每次编辑都会立刻保存在手机（或浏览器）本地，同时照常在 0.4 秒后同步到 Mac。连不上 Mac 时右上角显示 `offline`，改动不会丢，关掉 App 也不会丢；重新连上后自动补传。
+- **冲突合并**：离线期间 Mac 上（或 AI）也改了同一周，连上后两边的改动都会保留。
+- **App 本身也存在手机上**：Mac 不在线时也能从主屏幕打开，看到最近一次同步的内容并继续编辑。iPhone 只在 **HTTPS** 地址下允许这一点，所以需要用 Tailscale：
+
+1. Mac 和 iPhone 都安装 [Tailscale](https://tailscale.com/download)，登录同一个账号。
+2. 在 Tailscale 网页后台的 **DNS** 页面，确认 **MagicDNS** 已开启，并开启 **HTTPS Certificates**。
+3. 在 Mac 终端运行一次（之后开机会自动生效）：
+
+   ```bash
+   /Applications/Tailscale.app/Contents/MacOS/Tailscale serve --bg 4173
+   ```
+
+   它会打印一个 `https://你的Mac名.xxxx.ts.net` 地址。以后 `bash scripts/service.sh status` 也会显示这个地址。
+4. iPhone 上打开 Tailscale（保持连接），用 Safari 打开这个 https 地址，**添加到主屏幕**；旧的主屏幕图标可以删掉。
+
+这个地址是固定的：换 Wi-Fi、在外面用流量都能连上 Mac；Tailscale 断开或 Mac 关机时，App 自动进入离线模式。
 
 ## 使用
 

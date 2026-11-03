@@ -42,12 +42,25 @@ wait_healthy() { # up to ~15s for the server to answer
   return 1
 }
 
+tailscale_cli() {
+  command -v tailscale 2>/dev/null && return 0
+  local app="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+  [ -x "$app" ] && printf '%s\n' "$app"
+  return 0
+}
+
 lan_addresses() {
-  local ifc ip
+  local ifc ip ts url
   for ifc in en0 en1 en2; do
     ip="$(ipconfig getifaddr "$ifc" 2>/dev/null || true)"
     [ -n "$ip" ] && say "  Phone (same Wi-Fi): http://$ip:$PORT"
   done
+  # Tailscale HTTPS address (fixed, works anywhere, enables offline use) if set up
+  ts="$(tailscale_cli)"
+  if [ -n "$ts" ]; then
+    url="$("$ts" serve status 2>/dev/null | grep -o 'https://[^ ]*' | head -n 1 || true)"
+    [ -n "$url" ] && say "  Phone (anywhere, offline-ready): $url"
+  fi
   return 0
 }
 
