@@ -36,6 +36,11 @@ Weeks follow ISO-8601: they start on **Monday**, and `2026-W45` = 2026-11-02 …
 
 ...one "##" section per day, Mon to Sun...
 
+## Summary
+
+- [ ] Deep work blocks worked well
+- [x] Next week: start earlier on problem sets
+
 ## Notes
 
 Free-form Markdown, kept verbatim (weekly reflection, plans, etc.).
@@ -48,6 +53,7 @@ Rules:
 | `## Pinned` | Tasks that must get done this week, not tied to a day |
 | `## <anything> YYYY-MM-DD` | A day. Only the date matters; the weekday name is cosmetic |
 | `### <Category>` under a day | A column. Default: `Academics`, `Work`, `Personal`. New names become new columns |
+| `## Summary` | End-of-week review points (checkbox list) |
 | `- [ ] text` / `- [x] text` | Open / done task. One line per task |
 | `## Notes` | Free text until the next `##` heading |
 
@@ -87,6 +93,7 @@ JSON shape:
   "week": "2026-W45",
   "categories": ["Academics", "Work", "Personal"],
   "pinned": [{ "text": "Submit visa form", "done": false }],
+  "summary": [{ "text": "Deep work blocks worked well", "done": false }],
   "days": [
     { "date": "2026-11-02", "items": { "Academics": [{ "text": "Read paper A", "done": true }], "Work": [], "Personal": [] } }
   ],

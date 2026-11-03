@@ -2,7 +2,8 @@
 // conflict merging and live reload when the file changes on disk (e.g. an AI
 // agent edited the Markdown). The UI only calls actions and re-renders on change.
 //
-// Item locations:  { list: 'pinned' }  or  { list: 'day', date: 'YYYY-MM-DD', category: 'Work' }
+// Item locations:  { list: 'pinned' }, { list: 'summary' }
+//                  or { list: 'day', date: 'YYYY-MM-DD', category: 'Work' }
 // Items carry a client-only `id` for rendering; it is never saved.
 
 let nextId = 1;
@@ -11,6 +12,7 @@ const newId = () => `i${nextId++}`;
 const withIds = (week) => ({
   ...week,
   pinned: week.pinned.map((it) => ({ ...it, id: newId() })),
+  summary: (week.summary ?? []).map((it) => ({ ...it, id: newId() })),
   days: week.days.map((d) => ({
     ...d,
     items: Object.fromEntries(Object.entries(d.items).map(([c, l]) => [c, l.map((it) => ({ ...it, id: newId() }))])),
@@ -21,6 +23,7 @@ const stripIds = (week) => ({
   week: week.week,
   categories: week.categories,
   pinned: week.pinned.map(({ text, done }) => ({ text, done })),
+  summary: week.summary.map(({ text, done }) => ({ text, done })),
   days: week.days.map((d) => ({
     date: d.date,
     items: Object.fromEntries(Object.entries(d.items).map(([c, l]) => [c, l.map(({ text, done }) => ({ text, done }))])),
@@ -30,6 +33,7 @@ const stripIds = (week) => ({
 
 function listAt(week, loc) {
   if (loc.list === 'pinned') return week.pinned;
+  if (loc.list === 'summary') return week.summary;
   const day = week.days.find((d) => d.date === loc.date);
   if (!day) throw new Error(`No day ${loc.date} in ${week.week}`);
   return (day.items[loc.category] ??= []);

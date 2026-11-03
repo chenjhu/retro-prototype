@@ -31,6 +31,10 @@ export function weekToMarkdown(week) {
     }
   }
 
+  lines.push('## Summary', '');
+  items(w.summary);
+  if (w.summary.length) lines.push('');
+
   lines.push('## Notes', '');
   if (w.notes) lines.push(w.notes, '');
 
@@ -44,7 +48,7 @@ export function markdownToWeek(md, weekId) {
   const days = new Map(week.days.map((d) => [d.date, d]));
   const notes = [];
 
-  // section: 'pinned' | 'day' | 'notes' | null
+  // section: 'pinned' | 'summary' | 'day' | 'notes' | null
   let section = null;
   let day = null;
   let category = null;
@@ -65,6 +69,7 @@ export function markdownToWeek(md, weekId) {
       day = null;
       if (level === 1) section = null;
       else if (/^pinned\b/i.test(title)) section = 'pinned';
+      else if (/^summary\b/i.test(title)) section = 'summary';
       else if (/^notes\b/i.test(title)) section = 'notes';
       else if (date && validDates.has(date)) {
         section = 'day';
@@ -86,6 +91,7 @@ export function markdownToWeek(md, weekId) {
     const item = { text: m[2], done: m[1] === 'x' || m[1] === 'X' };
 
     if (section === 'pinned') week.pinned.push(item);
+    else if (section === 'summary') week.summary.push(item);
     else if (section === 'day' && category) {
       const key = Object.keys(day.items).find((c) => c.toLowerCase() === category.toLowerCase());
       (day.items[key ?? category] ??= []).push(item);

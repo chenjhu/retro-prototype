@@ -1,7 +1,7 @@
-// Weekly Review — a zero-dependency local server.
+// Retro — a zero-dependency local server.
 //
 // Stores one Markdown file per ISO week in DATA_DIR (default ./data), serves the
-// web UI, and exposes a small JSON API. Run:  node server.js
+// web UI, and exposes a small JSON API. Run:  node server   (or: npm start)
 // Env: PORT (default 4173), HOST (default 0.0.0.0 so your phone on the same
 // network can reach it), DATA_DIR.
 
@@ -13,11 +13,11 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-import { weekToMarkdown, markdownToWeek } from './shared/markdown.js';
-import { emptyWeek, normalizeWeek, DEFAULT_CATEGORIES } from './shared/model.js';
-import { isValidWeekId, currentWeekId, todayLocal, weekDates } from './shared/week.js';
+import { weekToMarkdown, markdownToWeek } from '../shared/markdown.js';
+import { emptyWeek, normalizeWeek, DEFAULT_CATEGORIES } from '../shared/model.js';
+import { isValidWeekId, currentWeekId, todayLocal, weekDates } from '../shared/week.js';
 
-const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MAX_BODY = 1024 * 1024;
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -28,6 +28,7 @@ const MIME = {
   '.png': 'image/png',
   '.ico': 'image/x-icon',
   '.webmanifest': 'application/manifest+json',
+  '.woff2': 'font/woff2',
 };
 
 const versionOf = (text) =>
@@ -241,13 +242,15 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
 }
 
 // ---- Entry point
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+const entry = process.argv[1] && fs.existsSync(process.argv[1]) ? fs.realpathSync(process.argv[1]) : '';
+const self = fs.realpathSync(fileURLToPath(import.meta.url));
+if (entry === self || entry === path.dirname(self)) {
   const port = Number(process.env.PORT ?? 4173);
   const host = process.env.HOST ?? '0.0.0.0';
   const dataDir = path.resolve(process.env.DATA_DIR ?? path.join(ROOT, 'data'));
   const server = createApp({ dataDir });
   server.listen(port, host, () => {
-    console.log(`Weekly Review running. Data: ${dataDir}`);
+    console.log(`Retro running. Data: ${dataDir}`);
     console.log(`  This computer:  http://localhost:${port}`);
     for (const addrs of Object.values(os.networkInterfaces())) {
       for (const a of addrs ?? []) {

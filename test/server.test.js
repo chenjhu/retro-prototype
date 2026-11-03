@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createApp } from '../server.js';
-import { createApi, createStore } from '../public/store.js';
+import { createApp } from '../server/index.js';
+import { createApi, createStore } from '../public/js/store.js';
 
 let server, base, dataDir;
 const ID = '2026-W45';

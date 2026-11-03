@@ -5,6 +5,7 @@
 //   categories: ["Academics", "Work", "Personal"],   // column order
 //   pinned: [{ text, done }],
 //   days: [ { date: "2026-11-02", items: { Academics: [{ text, done }], ... } }, ... 7 days ],
+//   summary: [{ text, done }],                        // end-of-week review points
 //   notes: ""                                         // free-form markdown, kept verbatim
 // }
 
@@ -17,6 +18,7 @@ export function emptyWeek(weekId, categories = DEFAULT_CATEGORIES) {
     week: weekId,
     categories: [...categories],
     pinned: [],
+    summary: [],
     days: weekDates(weekId).map((date) => ({
       date,
       items: Object.fromEntries(categories.map((c) => [c, []])),
@@ -75,6 +77,7 @@ export function normalizeWeek(input, weekId = input?.week) {
 
   out.categories = categories;
   out.pinned = cleanItems(input?.pinned);
+  out.summary = cleanItems(input?.summary);
   out.notes = typeof input?.notes === 'string' ? input.notes.replace(/\r\n/g, '\n').trim() : '';
   return out;
 }
