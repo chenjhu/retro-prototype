@@ -62,11 +62,71 @@ button:active { opacity: 0.45; }
   -webkit-user-select: none;
 }
 .week { display: flex; align-items: baseline; white-space: nowrap; }
-.week label { position: relative; cursor: pointer; transition: opacity 0.15s; }
-.week label:active { opacity: 0.45; }
-.week select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; -webkit-appearance: none; appearance: none; border: 0; cursor: pointer; }
 .week-no { font-weight: 700; font-size: 28px; line-height: 34px; }
-.week-year { font-size: 20px; line-height: 34px; margin-left: 18px; }
+.week-year { font-size: 20px; line-height: 34px; margin-left: 18px; transition: color var(--dur) var(--ease); }
+.picker-open .week-year { color: var(--grey); }
+
+/* ---------- Week picker: two drum wheels folding out under the title */
+.picker { height: 0; overflow: hidden; transition: height var(--dur) var(--ease); }
+.picker-inner { padding: 10px 0 4px; }
+.wheels {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  height: 170px; /* 5 rows of 34px */
+}
+.wheel {
+  width: 96px;
+  height: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  perspective: 420px;
+  /* rows dissolve towards the top and bottom edges */
+  -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+  mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent);
+  touch-action: pan-y;
+}
+.wheel::-webkit-scrollbar { display: none; }
+.wheel-track { padding: 68px 0; } /* (170 - 34) / 2: lets the first and last rows reach the centre */
+.wheel-item {
+  height: 34px;
+  line-height: 34px;
+  text-align: center;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  scroll-snap-align: center;
+  transform-origin: 50% 50%;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.wheel-item.on { font-weight: 500; }
+.wheel-band { /* the centre row: two hairlines */
+  position: absolute;
+  left: 50%;
+  top: 68px;
+  width: 216px;
+  height: 34px;
+  transform: translateX(-50%);
+  border-top: 0.5px solid var(--grey);
+  border-bottom: 0.5px solid var(--grey);
+  pointer-events: none;
+}
+.picker-foot {
+  display: flex;
+  justify-content: space-between;
+  width: 216px;
+  margin: 8px auto 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--grey);
+  font-variant-numeric: tabular-nums;
+}
+#picker-now { color: var(--black); transition: opacity 0.2s; }
+#picker-now[hidden] { display: inline; visibility: hidden; }
 .sync { flex: 1; text-align: center; font-size: 12px; color: var(--grey); }
 .done-count { display: flex; align-items: baseline; font-size: 20px; line-height: 34px; }
 .done-count .times { white-space: pre; margin-right: 7px; }

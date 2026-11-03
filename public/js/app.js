@@ -7,6 +7,7 @@
 import { createStore, connectLive } from './store.js';
 import { renderItems, focusItem, autosize, autosizeAll } from './items.js';
 import { attachSwipe } from './gestures.js';
+import { createWheel } from './wheel.js';
 import {
   shiftWeek,
   weekdayIndex,
@@ -67,7 +68,7 @@ function render() {
   if (!weekId) return;
   $('week-no').textContent = `W${weekId.slice(6)}`;
   $('week-year').textContent = weekId.slice(0, 4);
-  renderPickers(weekId);
+  if (pickerOpen) renderPicker(weekId);
   renderSync();
   if (!week) return;
 
@@ -89,51 +90,72 @@ function render() {
   layout();
 }
 
-// ---------- Week / year pickers (native <select>s overlaid on "W45" and "2026")
+// ---------- Week picker: tap "W45 2026" to fold out two wheels (week, year)
 
 const md = (date) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
-let pickerYear = null;
+const makeWeekId = (year, week) => `${year}-W${String(week).padStart(2, '0')}`;
+const weeksIn = (year) => (isValidWeekId(makeWeekId(year, 53)) ? 53 : 52);
+let pickerOpen = false;
 
-function renderPickers(weekId) {
-  const year = Number(weekId.slice(0, 4));
-  const now = currentWeekId();
-  const ws = $('week-select');
-  const ys = $('year-select');
-  if (pickerYear !== year || ws.dataset.now !== now) {
-    pickerYear = year;
-    ws.dataset.now = now;
-    const opts = [`<option value="now">This week · W${now.slice(6)} ${now.slice(0, 4)}</option>`];
-    for (let w = 1; w <= 53; w++) {
-      const id = `${year}-W${String(w).padStart(2, '0')}`;
-      if (!isValidWeekId(id)) continue;
-      const d = weekDates(id);
-      opts.push(`<option value="${id}">W${w} · ${md(d[0])} – ${md(d[6])}</option>`);
-    }
-    ws.innerHTML = opts.join('');
-    const thisYear = Number(now.slice(0, 4));
-    const years = new Set();
-    for (let y = Math.min(year, thisYear - 5); y <= Math.max(year, thisYear + 5); y++) years.add(y);
-    ys.innerHTML = [...years].map((y) => `<option value="${y}">${y}</option>`).join('');
+const weekWheel = createWheel($('wheel-week'), { onSettle: () => pickFromWheels() });
+const yearWheel = createWheel($('wheel-year'), {
+  onSettle: (year) => {
+    fillWeekWheel(year); // 52 or 53 weeks
+    pickFromWheels();
+  },
+});
+
+function fillWeekWheel(year) {
+  const n = weeksIn(year);
+  if (weekWheel.count !== n) {
+    weekWheel.count = n;
+    weekWheel.setValues(Array.from({ length: n }, (_, i) => i + 1), (w) => `W${w}`);
   }
-  ws.value = weekId;
-  ys.value = String(year);
 }
 
-$('week-select').addEventListener('change', (e) => {
-  const id = e.target.value === 'now' ? currentWeekId() : e.target.value;
-  goToWeek(id);
-});
-$('year-select').addEventListener('change', (e) => {
-  const week = store.state.weekId.slice(6);
-  let id = `${e.target.value}-W${week}`;
-  if (!isValidWeekId(id)) id = `${e.target.value}-W52`; // that year has no week 53
-  goToWeek(id);
-});
+function fillYearWheel(year) {
+  const now = Number(currentWeekId().slice(0, 4));
+  const from = Math.min(year, now - 5);
+  const to = Math.max(year, now + 5);
+  if (yearWheel.range !== `${from}-${to}`) {
+    yearWheel.range = `${from}-${to}`;
+    yearWheel.setValues(Array.from({ length: to - from + 1 }, (_, i) => from + i));
+  }
+}
 
-function goToWeek(id) {
-  const cur = store.state.weekId;
-  if (id === cur) return renderPickers(cur);
-  openWeek(id, id > cur ? 1 : -1);
+/** Point the wheels at the week on screen (unless the user is turning them). */
+function renderPicker(id) {
+  const year = Number(id.slice(0, 4));
+  const week = Number(id.slice(6));
+  if (!yearWheel.busy) {
+    fillYearWheel(year);
+    yearWheel.setValue(year);
+  }
+  if (!weekWheel.busy && !yearWheel.busy) {
+    fillWeekWheel(year);
+    weekWheel.setValue(week);
+  }
+  const d = weekDates(id);
+  $('picker-range').textContent = `${md(d[0])} – ${md(d[6])}`;
+  $('picker-now').hidden = id === currentWeekId();
+}
+
+function pickFromWheels() {
+  const year = yearWheel.value;
+  const week = Math.min(weekWheel.value, weeksIn(year));
+  const id = makeWeekId(year, week);
+  if (id !== store.state.weekId) openWeek(id);
+}
+
+function setPicker(open) {
+  if (open === pickerOpen) return;
+  pickerOpen = open;
+  body.classList.toggle('picker-open', open);
+  $('week').setAttribute('aria-expanded', String(open));
+  $('picker').setAttribute('aria-hidden', String(!open));
+  if (open) renderPicker(store.state.weekId);
+  $('picker').style.height = open ? `${$('picker-inner').offsetHeight}px` : '0px';
+  if (open) requestAnimationFrame(() => (weekWheel.paint(), yearWheel.paint()));
 }
 
 /** First visit on this device (nothing remembered yet): open the category with the most
@@ -347,6 +369,12 @@ function addAndFocus(loc, index) {
 document.addEventListener('click', (e) => {
   const t = e.target;
   let el;
+  // Week picker: the title toggles it; a tap anywhere else folds it away.
+  if (t.closest('#week')) return setPicker(!pickerOpen);
+  if (t.closest('#picker-now')) return openWeek(currentWeekId());
+  if (t.closest('#picker')) return;
+  if (pickerOpen) setPicker(false);
+
   if ((el = t.closest('.item .cb'))) {
     store.toggle(locOf(el), el.closest('.item').dataset.id);
   } else if ((el = t.closest('[data-add]'))) {

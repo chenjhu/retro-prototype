@@ -19,11 +19,9 @@
   <body class="mode-day">
     <div class="app">
       <header class="hdr" id="hdr">
-        <div class="week">
-          <!-- Transparent native pickers sit on top of the labels: tap opens the iOS wheel. -->
-          <label class="week-no"><span id="week-no">W45</span><select id="week-select" aria-label="Week"></select></label>
-          <label class="week-year"><span id="week-year">2026</span><select id="year-select" aria-label="Year"></select></label>
-        </div>
+        <button type="button" class="week" id="week" aria-label="Choose week" aria-expanded="false" aria-controls="picker">
+          <span class="week-no" id="week-no">W45</span><span class="week-year" id="week-year">2026</span>
+        </button>
         <span class="sync" id="sync" role="status" aria-live="polite"></span>
         <div class="done-count" aria-label="Tasks completed this week">
           <span id="done-count">0</span><span class="times"> x</span>
@@ -33,6 +31,21 @@
           </svg>
         </div>
       </header>
+
+      <!-- Week picker: two scroll wheels that fold out under the title. -->
+      <div class="picker" id="picker" aria-hidden="true">
+        <div class="picker-inner" id="picker-inner">
+          <div class="wheels">
+            <div class="wheel" id="wheel-week" aria-label="Week"></div>
+            <div class="wheel" id="wheel-year" aria-label="Year"></div>
+            <div class="wheel-band" aria-hidden="true"></div>
+          </div>
+          <div class="picker-foot">
+            <span id="picker-range"></span>
+            <button type="button" id="picker-now">This week</button>
+          </div>
+        </div>
+      </div>
 
       <section class="pinned" id="pinned" aria-label="Pinned for this week">
         <div class="pinned-inner" id="pinned-inner">
