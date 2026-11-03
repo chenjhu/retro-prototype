@@ -25,6 +25,7 @@ function createItem(it, animate) {
   input.enterKeyHint = 'next';
   input.autocomplete = 'off';
   input.setAttribute('autocapitalize', 'sentences');
+  input.spellcheck = false; // no red squiggles
   input.setAttribute('aria-label', 'Task');
 
   li.append(cb, input);

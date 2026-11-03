@@ -34,6 +34,8 @@ const MIME = {
 const versionOf = (text) =>
   text == null ? 'empty' : crypto.createHash('sha1').update(text).digest('hex').slice(0, 16);
 
+const BACKUP_DAYS = 30;
+
 export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
   fs.mkdirSync(dataDir, { recursive: true });
   const fileFor = (id) => path.join(dataDir, `${id}.md`);
@@ -67,11 +69,27 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
       }
       const week = normalizeWeek(input, id);
       const markdown = weekToMarkdown(week);
+      if (current.version !== 'empty' && markdown !== current.markdown) await backup(id);
       const tmp = `${fileFor(id)}.${process.pid}.${Date.now()}.tmp`;
       await fsp.writeFile(tmp, markdown, 'utf8');
       await fsp.rename(tmp, fileFor(id)); // atomic replace
       return { conflict: false, week, version: versionOf(markdown), markdown };
     });
+  }
+
+  // Safety net: the first time a week file changes on a given day, keep a copy of it
+  // as it was in DATA_DIR/.backups/YYYY-MM-DD/. Only the last BACKUP_DAYS days are kept.
+  const backupRoot = path.join(dataDir, '.backups');
+  async function backup(id) {
+    const dir = path.join(backupRoot, todayLocal());
+    const dest = path.join(dir, `${id}.md`);
+    if (fs.existsSync(dest)) return;
+    await fsp.mkdir(dir, { recursive: true });
+    await fsp.copyFile(fileFor(id), dest);
+    const days = (await fsp.readdir(backupRoot)).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+    for (const old of days.slice(0, -BACKUP_DAYS)) {
+      await fsp.rm(path.join(backupRoot, old), { recursive: true, force: true });
+    }
   }
 
   async function listWeeks() {

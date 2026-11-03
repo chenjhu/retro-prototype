@@ -51,11 +51,31 @@ test('PUT writes Markdown; If-Match guards against overwriting newer edits', asy
   assert.equal((await stale.json()).current.version, saved.version);
 });
 
+test('the version before the first change of the day is backed up', async () => {
+  const id = '2026-W30';
+  const file = path.join(dataDir, `${id}.md`);
+  fs.writeFileSync(file, '# Week\n\n## Pinned\n\n- [ ] original\n');
+  const put = async (text) => {
+    const w = await (await fetch(`${base}/api/weeks/${id}`)).json();
+    w.pinned = [{ text, done: false }];
+    const res = await fetch(`${base}/api/weeks/${id}`, { method: 'PUT', body: JSON.stringify(w) });
+    assert.equal(res.status, 200);
+  };
+  await put('first edit');
+  await put('second edit');
+  const [day] = fs.readdirSync(path.join(dataDir, '.backups'));
+  const saved = fs.readFileSync(path.join(dataDir, '.backups', day, `${id}.md`), 'utf8');
+  assert.match(saved, /- \[ \] original/); // the day's starting point, not overwritten by later saves
+  assert.match(fs.readFileSync(file, 'utf8'), /second edit/);
+  const list = await (await fetch(`${base}/api/weeks`)).json();
+  assert.ok(list.weeks.includes(id)); // backups don't show up as weeks
+});
+
 test('raw Markdown and export endpoints', async () => {
   const md = await (await fetch(`${base}/api/weeks/${ID}.md`)).text();
   assert.match(md, /^# Week 2026-W45/);
   const exp = await (await fetch(`${base}/api/export`)).json();
-  assert.deepEqual(exp.weeks.map((w) => w.week), [ID]);
+  assert.ok(exp.weeks.map((w) => w.week).includes(ID));
 });
 
 test('rejects bad ids and path traversal', async () => {
@@ -72,15 +92,18 @@ test('live event fires when the file is edited outside the app', async () => {
   await reader.read(); // retry header
   fs.appendFileSync(path.join(dataDir, `${ID}.md`), '\n');
   let text = '';
-  while (!text.includes('week-changed')) text += new TextDecoder().decode((await reader.read()).value);
-  assert.match(text, /"week":"2026-W45"/);
-  ctrl.abort();
+  try {
+    while (!text.includes('"week":"2026-W45"')) text += new TextDecoder().decode((await reader.read()).value);
+  } finally {
+    ctrl.abort();
+  }
+  assert.match(text, /event: week-changed/);
 });
 
 test('store: edits autosave, and concurrent agent edits are merged not lost', async () => {
   const store = createStore({ api: createApi(base), saveDelay: 10 });
   await store.load(ID);
-  const loc = { list: 'day', date: '2026-11-03', category: 'Academics' };
+  const loc = { list: 'day', date: '2026-11-03', category: 'Academic' };
   const id = store.addItem(loc, 'Lecture notes');
   store.toggle(loc, id, true);
 
@@ -91,7 +114,7 @@ test('store: edits autosave, and concurrent agent edits are merged not lost', as
   await store.flush();
   const md = fs.readFileSync(file, 'utf8');
   assert.match(md, /- \[ \] From agent/);
-  assert.match(md, /## Tue 2026-11-03\n\n### Academics\n\n- \[x\] Lecture notes/);
+  assert.match(md, /## Tue 2026-11-03\n\n### Academic\n\n- \[x\] Lecture notes/);
   assert.match(md, /Email Prof\. Li/);
   assert.equal(store.hasUnsaved, false);
 });

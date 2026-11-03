@@ -9,6 +9,6 @@
   },
   "scripts": {
     "start": "node server",
-    "test": "node --test"
+    "test": "node --test --test-timeout=20000"
   }
 }

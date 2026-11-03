@@ -7,7 +7,15 @@
 import { createStore, connectLive } from './store.js';
 import { renderItems, focusItem } from './items.js';
 import { attachSwipe } from './gestures.js';
-import { shiftWeek, weekdayIndex, WEEKDAY_SHORT, todayLocal, currentWeekId } from '/shared/week.js';
+import {
+  shiftWeek,
+  weekdayIndex,
+  weekDates,
+  isValidWeekId,
+  WEEKDAY_SHORT,
+  todayLocal,
+  currentWeekId,
+} from '/shared/week.js';
 
 const store = createStore();
 const $ = (id) => document.getElementById(id);
@@ -58,6 +66,7 @@ function render() {
   if (!weekId) return;
   $('week-no').textContent = `W${weekId.slice(6)}`;
   $('week-year').textContent = weekId.slice(0, 4);
+  renderPickers(weekId);
   renderSync();
   if (!week) return;
 
@@ -77,6 +86,53 @@ function render() {
   renderSwitcher();
   renderDays();
   layout();
+}
+
+// ---------- Week / year pickers (native <select>s overlaid on "W45" and "2026")
+
+const md = (date) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+let pickerYear = null;
+
+function renderPickers(weekId) {
+  const year = Number(weekId.slice(0, 4));
+  const now = currentWeekId();
+  const ws = $('week-select');
+  const ys = $('year-select');
+  if (pickerYear !== year || ws.dataset.now !== now) {
+    pickerYear = year;
+    ws.dataset.now = now;
+    const opts = [`<option value="now">This week · W${now.slice(6)} ${now.slice(0, 4)}</option>`];
+    for (let w = 1; w <= 53; w++) {
+      const id = `${year}-W${String(w).padStart(2, '0')}`;
+      if (!isValidWeekId(id)) continue;
+      const d = weekDates(id);
+      opts.push(`<option value="${id}">W${w} · ${md(d[0])} – ${md(d[6])}</option>`);
+    }
+    ws.innerHTML = opts.join('');
+    const thisYear = Number(now.slice(0, 4));
+    const years = new Set();
+    for (let y = Math.min(year, thisYear - 5); y <= Math.max(year, thisYear + 5); y++) years.add(y);
+    ys.innerHTML = [...years].map((y) => `<option value="${y}">${y}</option>`).join('');
+  }
+  ws.value = weekId;
+  ys.value = String(year);
+}
+
+$('week-select').addEventListener('change', (e) => {
+  const id = e.target.value === 'now' ? currentWeekId() : e.target.value;
+  goToWeek(id);
+});
+$('year-select').addEventListener('change', (e) => {
+  const week = store.state.weekId.slice(6);
+  let id = `${e.target.value}-W${week}`;
+  if (!isValidWeekId(id)) id = `${e.target.value}-W52`; // that year has no week 53
+  goToWeek(id);
+});
+
+function goToWeek(id) {
+  const cur = store.state.weekId;
+  if (id === cur) return renderPickers(cur);
+  openWeek(id, id > cur ? 1 : -1);
 }
 
 function renderSync() {
@@ -139,8 +195,7 @@ function compactRowHeight(row) {
   const first = row === track.firstElementChild;
   const last = row === track.lastElementChild;
   const items = row.querySelectorAll('.item').length * 20;
-  const side = 20 + (row.classList.contains('today') ? 20 : 0);
-  const natural = (first ? 8 : 7) + Math.max(items, side) + (last ? 24 : 6) + (last ? 0 : 1);
+  const natural = (first ? 8 : 7) + Math.max(items, 20) + (last ? 24 : 6) + (last ? 0 : 1);
   return Math.max(last ? 0 : cssPx('--row') + 1, natural);
 }
 
@@ -148,15 +203,15 @@ function compactRowHeight(row) {
 function layout() {
   const box = $('pinned');
   const inner = $('pinned-inner');
-  const open = Math.max(cssPx('--pinned-open'), inner.offsetHeight + 57);
-  const closed = cssPx('--pinned-closed');
+  const closed = box.querySelector('.section-title').offsetHeight;
+  const open = Math.max(closed + cssPx('--focus-extra'), inner.offsetHeight);
   box.style.height = `${ui.mode === 'pinned' ? open : closed}px`;
 
-  // The focused day takes exactly the space the pinned box gives up (minus the switcher's
-  // 4px shift), so the rows below it don't move when switching between pinned and day mode.
+  // The focused day takes exactly the space Pinned gives up when it closes, so the rows
+  // below it don't move when switching between pinned and day mode.
   for (const row of track.children) {
     row.style.minHeight = row.classList.contains('focus')
-      ? `${compactRowHeight(row) + open - closed - 4}px`
+      ? `${compactRowHeight(row) + open - closed}px`
       : '';
   }
 
@@ -279,7 +334,9 @@ function addAndFocus(loc, index) {
 document.addEventListener('click', (e) => {
   const t = e.target;
   let el;
-  if ((el = t.closest('.cb'))) {
+  if (t.closest('#fab')) {
+    if (ui.mode === 'pinned' || ui.mode === 'summary') addAndFocus({ list: ui.mode });
+  } else if ((el = t.closest('.item .cb'))) {
     store.toggle(locOf(el), el.closest('.item').dataset.id);
   } else if ((el = t.closest('[data-add]'))) {
     addAndFocus({ list: el.dataset.add });
@@ -287,12 +344,10 @@ document.addEventListener('click', (e) => {
     addAndFocus(dayLoc(el.closest('.day').dataset.date));
   } else if ((el = t.closest('.day-label'))) {
     setMode('day', el.closest('.day').dataset.date);
-  } else if ((el = t.closest('[data-mode]')) || (t.closest('.pinned') && ui.mode !== 'pinned')) {
-    setMode(el?.dataset.mode ?? 'pinned');
+  } else if ((el = t.closest('[data-mode]'))) {
+    setMode(el.dataset.mode);
   } else if ((el = t.closest('[data-cat-step]'))) {
     changeCategory(Number(el.dataset.catStep));
-  } else if (t.closest('#week') && store.state.weekId !== currentWeekId()) {
-    openWeek(currentWeekId(), store.state.weekId < currentWeekId() ? 1 : -1);
   }
 });
 

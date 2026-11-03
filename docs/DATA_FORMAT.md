@@ -23,7 +23,7 @@ Weeks follow ISO-8601: they start on **Monday**, and `2026-W45` = 2026-11-02 …
 
 ## Mon 2026-11-02
 
-### Academics
+### Academic
 
 - [x] Read paper A
 - [ ] Problem set 3
@@ -52,10 +52,24 @@ Rules:
 |---|---|
 | `## Pinned` | Tasks that must get done this week, not tied to a day |
 | `## <anything> YYYY-MM-DD` | A day. Only the date matters; the weekday name is cosmetic |
-| `### <Category>` under a day | A column. Default: `Academics`, `Work`, `Personal`. New names become new columns |
+| `### <Category>` under a day | A column. Default: `Academic`, `Work`, `Personal`. New names become new columns |
 | `## Summary` | End-of-week review points (checkbox list) |
 | `- [ ] text` / `- [x] text` | Open / done task. One line per task |
 | `## Notes` | Free text until the next `##` heading |
+
+Renamed categories: older files may use an old name; it is read as the new one
+(`Academics` → `Academic`). The list lives in `CATEGORY_ALIASES` in `shared/model.js`.
+
+## Compatibility promise
+
+Files written by any earlier version must keep loading with nothing lost. Fixtures of
+each format version live in `test/fixtures/` and are checked by `npm test`; never edit
+them, add a new one when the format changes.
+
+## Backups
+
+Before a week file is first changed on a given day, the server copies it to
+`DATA_DIR/.backups/YYYY-MM-DD/<week>.md`. The last 30 days are kept.
 
 ## Editing the file directly (agents welcome)
 
@@ -91,11 +105,11 @@ JSON shape:
 ```json
 {
   "week": "2026-W45",
-  "categories": ["Academics", "Work", "Personal"],
+  "categories": ["Academic", "Work", "Personal"],
   "pinned": [{ "text": "Submit visa form", "done": false }],
   "summary": [{ "text": "Deep work blocks worked well", "done": false }],
   "days": [
-    { "date": "2026-11-02", "items": { "Academics": [{ "text": "Read paper A", "done": true }], "Work": [], "Personal": [] } }
+    { "date": "2026-11-02", "items": { "Academic": [{ "text": "Read paper A", "done": true }], "Work": [], "Personal": [] } }
   ],
   "notes": "",
   "dates": ["2026-11-02", "..."],

@@ -2,16 +2,20 @@
 //
 // {
 //   week: "2026-W45",
-//   categories: ["Academics", "Work", "Personal"],   // column order
+//   categories: ["Academic", "Work", "Personal"],   // column order
 //   pinned: [{ text, done }],
-//   days: [ { date: "2026-11-02", items: { Academics: [{ text, done }], ... } }, ... 7 days ],
+//   days: [ { date: "2026-11-02", items: { Academic: [{ text, done }], ... } }, ... 7 days ],
 //   summary: [{ text, done }],                        // end-of-week review points
 //   notes: ""                                         // free-form markdown, kept verbatim
 // }
 
 import { weekDates, isValidWeekId } from './week.js';
 
-export const DEFAULT_CATEGORIES = ['Academics', 'Work', 'Personal'];
+export const DEFAULT_CATEGORIES = ['Academic', 'Work', 'Personal'];
+
+// Old category names that existing files may still use → current name.
+// Add an entry here whenever a category is renamed, so old data keeps loading.
+export const CATEGORY_ALIASES = { academics: 'Academic' };
 
 export function emptyWeek(weekId, categories = DEFAULT_CATEGORIES) {
   return {
@@ -49,7 +53,8 @@ export function normalizeWeek(input, weekId = input?.week) {
   const categories = [];
   const seen = new Set();
   const addCategory = (c) => {
-    const name = cleanText(c);
+    const raw = cleanText(c);
+    const name = CATEGORY_ALIASES[raw.toLowerCase()] ?? raw;
     if (!name) return null;
     const key = name.toLowerCase();
     if (!seen.has(key)) {

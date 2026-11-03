@@ -19,27 +19,27 @@
   <body class="mode-day">
     <div class="app">
       <header class="hdr" id="hdr">
-        <button type="button" class="week" id="week" aria-label="Week. Swipe sideways to change week, tap to return to this week">
-          <span class="week-no" id="week-no">W45</span><span class="week-year" id="week-year">2026</span>
-        </button>
+        <div class="week">
+          <!-- Transparent native pickers sit on top of the labels: tap opens the iOS wheel. -->
+          <label class="week-no"><span id="week-no">W45</span><select id="week-select" aria-label="Week"></select></label>
+          <label class="week-year"><span id="week-year">2026</span><select id="year-select" aria-label="Year"></select></label>
+        </div>
         <span class="sync" id="sync" role="status" aria-live="polite"></span>
         <div class="done-count" aria-label="Tasks completed this week">
           <span id="done-count">0</span><span class="times"> x</span>
-          <svg viewBox="0 0 34 34" aria-hidden="true">
-            <circle cx="17" cy="17" r="16.25" />
-            <path d="M10.5 17.5 L15 23.5 L24.5 9.5" />
+          <svg viewBox="0 0 26 26" aria-hidden="true">
+            <rect x="0.65" y="0.65" width="24.7" height="24.7" rx="6" />
+            <path d="M7.2 13.4 11.1 17.6 18.8 8.4" />
           </svg>
         </div>
       </header>
 
       <section class="pinned" id="pinned" aria-label="Pinned for this week">
         <div class="pinned-inner" id="pinned-inner">
-          <button type="button" class="pinned-title" data-mode="pinned">Pinned for this week</button>
+          <button type="button" class="section-title" data-mode="pinned">Pinned for this week</button>
           <ul class="items" data-loc="pinned"></ul>
+          <button type="button" class="ghost" data-add="pinned" aria-label="Add pinned task"><span class="cb"></span></button>
         </div>
-        <button type="button" class="fab fab-pinned" data-add="pinned" aria-label="Add pinned task" tabindex="-1">
-          <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 10.5v13M10.5 17h13" /></svg>
-        </button>
       </section>
 
       <nav class="switcher" id="switcher" aria-label="Category">
@@ -61,14 +61,14 @@
       </section>
 
       <section class="summary" id="summary" aria-label="Summary">
-        <button type="button" class="summary-title" data-mode="summary">Summary</button>
+        <button type="button" class="section-title" data-mode="summary">Summary</button>
         <div class="summary-body" id="summary-body">
           <ul class="items" data-loc="summary"></ul>
         </div>
       </section>
     </div>
 
-    <button type="button" class="fab fab-summary" data-add="summary" aria-label="Add summary point" tabindex="-1">
+    <button type="button" class="fab" id="fab" aria-label="Add" tabindex="-1">
       <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M17 10.5v13M10.5 17h13" /></svg>
     </button>
 

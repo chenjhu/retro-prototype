@@ -5,7 +5,7 @@
 // file by hand: heading levels and checkbox styles are matched loosely, and plain
 // "- text" bullets are read as unchecked tasks.
 
-import { emptyWeek, normalizeWeek, DEFAULT_CATEGORIES } from './model.js';
+import { emptyWeek, normalizeWeek, DEFAULT_CATEGORIES, CATEGORY_ALIASES } from './model.js';
 import { weekDates, weekdayIndex, WEEKDAY_SHORT } from './week.js';
 
 const ITEM_RE = /^\s*[-*+]\s+(?:\[([ xX])\]\s*)?(.*)$/;
@@ -79,7 +79,7 @@ export function markdownToWeek(md, weekId) {
     }
 
     if (h && section === 'day') {
-      category = h[2];
+      category = CATEGORY_ALIASES[h[2].toLowerCase()] ?? h[2];
       if (!week.categories.some((c) => c.toLowerCase() === category.toLowerCase())) {
         week.categories.push(category);
       }
