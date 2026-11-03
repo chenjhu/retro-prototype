@@ -5,7 +5,7 @@
 // All data and syncing lives in store.js; this file only renders and handles input.
 
 import { createStore, connectLive } from './store.js';
-import { renderItems, focusItem, autosize, autosizeAll } from './items.js';
+import { renderItems, focusItem, autosize, autosizeAll, syncMark } from './items.js';
 import { attachSwipe } from './gestures.js';
 import { createWheel } from './wheel.js';
 import {
@@ -372,6 +372,7 @@ document.addEventListener('click', (e) => {
   if (pickerOpen) setPicker(false);
 
   if ((el = t.closest('.item .cb'))) {
+    if (longPressed) return void (longPressed = false); // that press highlighted instead
     store.toggle(locOf(el), el.closest('.item').dataset.id);
   } else if ((el = t.closest('[data-add]'))) {
     addAndFocus({ list: el.dataset.add });
@@ -394,8 +395,37 @@ function commitText(input) {
   if (item && item.text !== input.value) store.setText(loc, item.id, input.value);
 }
 
+// Long-press a task's checkbox to highlight it (tap still ticks it).
+const LONG_PRESS_MS = 450;
+let pressTimer = null;
+let pressStart = null;
+let longPressed = false;
+document.addEventListener('pointerdown', (e) => {
+  const cb = e.target.closest?.('.item .cb');
+  if (!cb) return;
+  longPressed = false;
+  pressStart = { x: e.clientX, y: e.clientY };
+  clearTimeout(pressTimer);
+  pressTimer = setTimeout(() => {
+    pressTimer = null;
+    longPressed = true;
+    store.toggleHighlight(locOf(cb), cb.closest('.item').dataset.id);
+  }, LONG_PRESS_MS);
+});
+const cancelPress = () => {
+  clearTimeout(pressTimer);
+  pressTimer = null;
+};
+document.addEventListener('pointerup', cancelPress);
+document.addEventListener('pointercancel', cancelPress);
+document.addEventListener('pointermove', (e) => {
+  if (pressTimer && pressStart && Math.hypot(e.clientX - pressStart.x, e.clientY - pressStart.y) > 10) cancelPress();
+});
+document.addEventListener('contextmenu', (e) => e.target.closest?.('.item .cb') && e.preventDefault());
+
 document.addEventListener('input', (e) => {
   if (!e.target.classList.contains('text')) return;
+  syncMark(e.target); // keep the highlighter layer in step with every keystroke
   // Don't commit mid-composition, or Chinese/Japanese IME input breaks…
   if (!e.isComposing) return commitText(e.target);
   // …but still let the field grow while composing.

@@ -33,10 +33,16 @@ export function emptyWeek(weekId, categories = DEFAULT_CATEGORIES) {
 
 const cleanText = (t) => String(t ?? '').replace(/\s*[\r\n]+\s*/g, ' ').trim();
 
+// An item is { text, done } plus `highlight: true` when highlighted (omitted otherwise,
+// so plain items keep their original two-field shape).
 function cleanItems(list) {
   if (!Array.isArray(list)) return [];
   return list
-    .map((it) => ({ text: cleanText(it?.text), done: Boolean(it?.done) }))
+    .map((it) => {
+      const item = { text: cleanText(it?.text), done: Boolean(it?.done) };
+      if (it?.highlight) item.highlight = true;
+      return item;
+    })
     .filter((it) => it.text !== '');
 }
 

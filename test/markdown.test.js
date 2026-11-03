@@ -68,3 +68,23 @@ test('normalize strips newlines and empty items, rejects bad ids', () => {
   assert.throws(() => normalizeWeek({ ...w, week: '2026-W44' }, ID), /mismatch/);
   assert.throws(() => normalizeWeek(w, 'nope'), /Invalid week/);
 });
+
+test('highlighted tasks are written as ==text== and read back', () => {
+  const w = emptyWeek(ID);
+  w.days[0].items.Work = [
+    { text: 'Martin Jakob · TEP 实习 (L)', done: true, highlight: true },
+    { text: 'Plain task', done: false },
+  ];
+  const md = weekToMarkdown(w);
+  assert.match(md, /- \[x\] ==Martin Jakob · TEP 实习 \(L\)==\n- \[ \] Plain task\n/);
+  assert.deepEqual(markdownToWeek(md, ID).days[0].items.Work, w.days[0].items.Work);
+  assert.equal(weekToMarkdown(markdownToWeek(md, ID)), md);
+});
+
+test('only a fully wrapped ==…== line counts as highlighted', () => {
+  const md = '## Mon 2026-11-02\n\n### Work\n\n- [ ] a == b inside\n- [ ] ==whole==\n';
+  assert.deepEqual(markdownToWeek(md, ID).days[0].items.Work, [
+    { text: 'a == b inside', done: false },
+    { text: 'whole', done: false, highlight: true },
+  ]);
+});

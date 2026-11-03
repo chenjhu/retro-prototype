@@ -15,7 +15,8 @@ export function weekToMarkdown(week) {
   const w = normalizeWeek(week);
   const dates = weekDates(w.week);
   const lines = [];
-  const items = (list) => list.forEach((it) => lines.push(`- [${it.done ? 'x' : ' '}] ${it.text}`));
+  const items = (list) =>
+    list.forEach((it) => lines.push(`- [${it.done ? 'x' : ' '}] ${it.highlight ? `==${it.text}==` : it.text}`));
 
   lines.push(`# Week ${w.week} (${dates[0]} to ${dates[6]})`, '');
   lines.push('## Pinned', '');
@@ -89,6 +90,8 @@ export function markdownToWeek(md, weekId) {
     const m = ITEM_RE.exec(line);
     if (!m || !m[2].trim()) continue;
     const item = { text: m[2], done: m[1] === 'x' || m[1] === 'X' };
+    const hl = /^==(.+)==\s*$/.exec(item.text.trim()); // ==text== marks a highlighted task
+    if (hl) Object.assign(item, { text: hl[1], highlight: true });
 
     if (section === 'pinned') week.pinned.push(item);
     else if (section === 'summary') week.summary.push(item);

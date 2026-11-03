@@ -55,6 +55,7 @@ Rules:
 | `### <Category>` under a day | A column. Default: `Academic`, `Work`, `Personal`. New names become new columns |
 | `## Summary` | End-of-week review points (checkbox list) |
 | `- [ ] text` / `- [x] text` | Open / done task. One line per task |
+| `- [ ] ==text==` | Highlighted task (the whole text wrapped in `==`): the user marked it as important |
 | `## Notes` | Free text until the next `##` heading |
 
 Renamed categories: older files may use an old name; it is read as the new one

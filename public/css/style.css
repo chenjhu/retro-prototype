@@ -6,6 +6,7 @@
   --white: #fff;
   --grey: #929292;
   --grey-light: #d5d5d5;
+  --highlight: #eeee06;
   --bg: #f6f6f6;
 
   --side: 24px;          /* page side margin */
@@ -158,10 +159,12 @@ button:active { opacity: 0.45; }
 .cb svg { position: absolute; inset: 1px; width: 10px; height: 10px; fill: none; stroke: var(--white); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; opacity: 0; transition: opacity 0.15s; }
 .item.done .cb { background: var(--black); }
 .item.done .cb svg { opacity: 1; }
+.field { position: relative; flex: 1; min-width: 0; }
 .text {
   /* An invisible frame: the task wraps inside its column and grows downwards. */
+  position: relative; /* above the highlighter layer */
   display: block;
-  flex: 1;
+  width: 100%;
   min-width: 0;
   height: 20px; /* replaced by the measured height from items.js */
   margin: 0;
@@ -185,6 +188,33 @@ button:active { opacity: 0.45; }
 }
 .item.done .text { color: var(--grey); }
 
+/* Highlight (option E): a #eeee06 band across the lower part of the letters, like a
+   highlighter pen. Text colour keeps its normal logic (black, or grey once ticked).
+   The layer copies the textarea's text and wrapping exactly but is itself invisible. */
+.mark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: transparent;
+  font: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: hidden;
+}
+.mark span {
+  padding: 0 1px;
+  margin: 0 -1px;
+  background-image: linear-gradient(transparent 66%, var(--highlight) 66%, var(--highlight) 94%, transparent 94%);
+  background-repeat: no-repeat;
+  background-size: 0% 100%; /* drawn in from the left when switched on */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 0.45s var(--ease);
+}
+.item.hl .mark span { background-size: 100% 100%; }
+.cb { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+
 /* ---------- Section titles: "Pinned for this week" and "Summary" share one style.
    Collapsed = light grey title only; open = black title + checklist + ● + button. */
 .section-title {
@@ -202,7 +232,7 @@ button:active { opacity: 0.45; }
 .mode-pinned .pinned .section-title,
 .mode-summary .summary .section-title { color: var(--black); }
 .pinned .item { min-height: 23px; }
-.pinned .text { line-height: 23px; }
+.pinned .text, .pinned .mark { line-height: 23px; }
 .pinned .item .cb { margin-top: 4.5px; }
 .ghost .cb { margin-top: 0; }
 .pinned .items { font-size: 15px; }

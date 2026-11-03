@@ -19,14 +19,16 @@ const withIds = (week) => ({
   })),
 });
 
+const plain = ({ text, done, highlight }) => (highlight ? { text, done, highlight } : { text, done });
+
 const stripIds = (week) => ({
   week: week.week,
   categories: week.categories,
-  pinned: week.pinned.map(({ text, done }) => ({ text, done })),
-  summary: week.summary.map(({ text, done }) => ({ text, done })),
+  pinned: week.pinned.map(plain),
+  summary: week.summary.map(plain),
   days: week.days.map((d) => ({
     date: d.date,
-    items: Object.fromEntries(Object.entries(d.items).map(([c, l]) => [c, l.map(({ text, done }) => ({ text, done }))])),
+    items: Object.fromEntries(Object.entries(d.items).map(([c, l]) => [c, l.map(plain)])),
   })),
   notes: week.notes,
 });
@@ -234,6 +236,10 @@ export function createStore({ api = createApi(), saveDelay = 400 } = {}) {
       const r = ref(loc, id);
       const item = listAt(state.week, loc).find((x) => x.id === id);
       mutate({ type: 'update', loc, ref: r, patch: { done: done ?? !item.done } });
+    },
+    toggleHighlight(loc, id) {
+      const item = listAt(state.week, loc).find((x) => x.id === id);
+      mutate({ type: 'update', loc, ref: ref(loc, id), patch: { highlight: !item.highlight } });
     },
     remove(loc, id) {
       mutate({ type: 'remove', loc, ref: ref(loc, id) });

@@ -8,9 +8,10 @@ function mergeList(target, incoming, added, where) {
     const existing = target.find((x) => same(x.text, it.text));
     if (existing) {
       if (it.done && !existing.done) existing.done = true; // only ever upgrade to done
+      if (it.highlight && !existing.highlight) existing.highlight = true; // …or to highlighted
       continue;
     }
-    target.push({ text: it.text, done: it.done });
+    target.push(it.highlight ? { text: it.text, done: it.done, highlight: true } : { text: it.text, done: it.done });
     added.push(`${where}: ${it.text}`);
   }
 }

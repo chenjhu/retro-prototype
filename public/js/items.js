@@ -30,15 +30,35 @@ function createItem(it, animate) {
   input.spellcheck = false; // no red squiggles
   input.setAttribute('aria-label', 'Task');
 
-  li.append(cb, input);
+  // Highlighter layer: an invisible copy of the text laid out exactly like the textarea,
+  // sitting behind it. Its span carries the yellow band, so the band follows every
+  // wrapped line without changing the layout.
+  const mark = document.createElement('div');
+  mark.className = 'mark';
+  mark.setAttribute('aria-hidden', 'true');
+  mark.append(document.createElement('span'));
+
+  const field = document.createElement('div');
+  field.className = 'field';
+  field.append(mark, input);
+
+  li.append(cb, field);
   return li;
+}
+
+/** Copy the task text into its highlighter layer (call on every edit). */
+export function syncMark(input) {
+  const span = input.previousElementSibling?.firstElementChild;
+  if (span && span.textContent !== input.value) span.textContent = input.value;
 }
 
 function updateItem(li, it) {
   li.classList.toggle('done', it.done);
+  li.classList.toggle('hl', Boolean(it.highlight));
   li.querySelector('.cb').setAttribute('aria-checked', String(it.done));
   const input = li.querySelector('.text');
   if (input.value !== it.text && document.activeElement !== input) input.value = it.text;
+  syncMark(input);
 }
 
 /** Fit a task's textarea to its wrapped text. */

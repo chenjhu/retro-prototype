@@ -35,3 +35,14 @@ test('merging the same file twice adds nothing the second time', () => {
   const once = mergeWeeks(emptyWeek(ID), incoming).week;
   assert.deepEqual(mergeWeeks(once, incoming).added, []);
 });
+
+test('merge can add a highlight to an existing task, never removes one', () => {
+  const base = emptyWeek(ID);
+  base.pinned = [{ text: 'A', done: false }, { text: 'B', done: false, highlight: true }];
+  const incoming = emptyWeek(ID);
+  incoming.pinned = [{ text: 'A', done: false, highlight: true }, { text: 'B', done: false }];
+  assert.deepEqual(mergeWeeks(base, incoming).week.pinned, [
+    { text: 'A', done: false, highlight: true },
+    { text: 'B', done: false, highlight: true },
+  ]);
+});
