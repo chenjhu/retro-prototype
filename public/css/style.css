@@ -269,7 +269,7 @@ button:active { opacity: 0.45; }
 .fab-pinned { position: absolute; left: 0; bottom: 12px; }
 .mode-pinned .fab-pinned { opacity: 1; transform: none; pointer-events: auto; }
 /* Summary: the button follows the last summary point (never covers it). */
-.fab-summary { margin: 14px 0 6px; }
+.fab-summary { margin: 14px 0 0; }
 .mode-summary .fab-summary { opacity: 1; transform: none; pointer-events: auto; }
 
 /* ---------- Category switcher: "Academic   < Work >   Personal" */
@@ -332,6 +332,9 @@ button:active { opacity: 0.45; }
 /* ---------- Summary */
 
 .summary-body { height: 0; overflow: hidden; transition: height var(--dur) var(--ease); }
+/* flow-root keeps the + button's top margin inside: with no summary points yet it would
+   otherwise slip out through the empty list, and the button got clipped. */
+.summary-inner { display: flow-root; }
 
 /* ---------- Desktop (wide screens): every category side by side.
    Everything below only applies from 900px; phones never see it. */
