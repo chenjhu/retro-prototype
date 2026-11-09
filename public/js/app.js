@@ -11,7 +11,6 @@ import { createWheel } from './wheel.js';
 import {
   shiftWeek,
   weekdayIndex,
-  weekIdOf,
   isValidWeekId,
   WEEKDAY_SHORT,
   todayLocal,
@@ -375,7 +374,8 @@ attachSwipe($('days'), {
 // ---------- Week switching (swipe the header; tap to return to this week)
 
 async function openWeek(id, step = 0) {
-  history.replaceState(null, '', `#${id}`);
+  // The week is deliberately NOT kept in the address: a remembered #2026-W45 used to
+  // pin the app to an old week after a reload. The app always starts from today.
   const app = document.querySelector('.app');
   if (step) await app.animate([{ opacity: 1 }, { opacity: 0, transform: `translateX(${-step * 24}px)` }], { duration: 140, fill: 'forwards' }).finished;
   lastDone = null;
@@ -537,15 +537,16 @@ let lastToday = todayLocal();
 function checkDate() {
   const today = todayLocal();
   if (today === lastToday) return;
-  const was = lastToday;
   lastToday = today;
+  // A new day: go to today, whichever week was on screen, and open it.
+  const now = currentWeekId();
   const viewing = store.state.weekId;
-  // The week rolled over while showing "this week": follow it to the new week.
-  if (viewing && viewing === weekIdOf(was) && viewing !== currentWeekId()) {
-    openWeek(currentWeekId(), 1);
+  if (ui.mode === 'day') ui.focusDate = today;
+  if (viewing && viewing !== now) {
+    if (pickerOpen) setPicker(false);
+    openWeek(now, now > viewing ? 1 : -1);
     return;
   }
-  if (ui.focusDate === was) ui.focusDate = today; // keep "today" in focus
   render();
 }
 
@@ -573,8 +574,11 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 setInterval(checkDate, 60 * 1000); // midnight while the app is open
+window.addEventListener('focus', checkDate); // some ways back into the app skip visibilitychange
 
-const fromHash = location.hash.slice(1);
-openWeek(/^\d{4}-W\d{2}$/.test(fromHash) ? fromHash : currentWeekId()).then(() => {
+// Always open on the real current week (by this device's date). Clear any week an older
+// version left in the address so it can't come back.
+if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+openWeek(currentWeekId()).then(() => {
   requestAnimationFrame(() => requestAnimationFrame(() => body.classList.remove('no-anim')));
 });
