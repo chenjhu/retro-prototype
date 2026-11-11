@@ -17,6 +17,7 @@ const APP_FILES = [
   '/manifest.webmanifest',
   '/icons/apple-touch-icon.png',
   '/icons/favicon-64.png',
+  '/icons/favicon.svg',
 ];
 const WAIT_MS = 2500; // how long to wait for the Mac before using the copy
 
