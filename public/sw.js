@@ -3,7 +3,7 @@
 // updates still arrive. Only if it doesn't answer in time is the cached copy used.
 // Data never goes through here: the app keeps its own copy of the weeks (store.js).
 
-const CACHE = 'retro-app-v1';
+const CACHE = 'retro-app-v2';
 const APP_FILES = [
   '/',
   '/css/style.css',
@@ -15,9 +15,9 @@ const APP_FILES = [
   '/shared/week.js',
   '/shared/model.js',
   '/manifest.webmanifest',
-  '/icons/apple-touch-icon.png',
-  '/icons/favicon-64.png',
-  '/icons/favicon.svg',
+  '/icons/apple-touch-icon-v2.png',
+  '/icons/favicon-64-v2.png',
+  '/icons/favicon-v2.svg',
 ];
 const WAIT_MS = 2500; // how long to wait for the Mac before using the copy
 
