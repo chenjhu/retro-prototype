@@ -167,7 +167,9 @@ function renderSync() {
   const { status, error } = store.state;
   $('sync').textContent =
     // Offline is fine: edits are kept on this device and sent when the Mac is back.
-    status === 'offline' ? 'offline' : status === 'error' ? `error: ${error}` : '';
+    status === 'offline' ? 'offline'
+    : status === 'unavailable' ? 'Mac can’t read the data · saved here'
+    : status === 'error' ? `error: ${error}` : '';
 }
 
 function renderSwitcher() {

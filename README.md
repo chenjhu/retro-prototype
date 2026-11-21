@@ -49,6 +49,7 @@ bash ~/Projects/retro-prototype/scripts/service.sh install "$HOME/路径/到/dat
 注意：
 - Mac **睡眠或关机**时手机连不上 Mac，但有了下面的离线模式，手机照样能用，连上后自动同步。
 - 如果日志提示 macOS 不允许访问数据文件夹（OneDrive 里的文件夹可能会这样），在「系统设置 → 隐私与安全性 → 完全磁盘访问权限」里加入 `node`，然后运行 `retro`。
+- **数据放在 OneDrive 里时**：在 Finder 里右键 `data` 文件夹 →「始终保留在此设备上」（Always Keep on This Device）。否则 OneDrive 会把一段时间没打开的周文件移到云端，后台服务读不到（日志里是 `Unknown system error -11`）。这时页面会显示 `Mac can't read the data · saved here`，改动先存在设备上，设置好后自动补传。
 
 ## 离线模式
 

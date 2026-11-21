@@ -67,7 +67,14 @@ function writeDataReadme(dataDir) {
   }
 }
 
-export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
+// macOS errno 11 (EDEADLK, "Resource deadlock avoided"): OneDrive/iCloud have moved
+// the file to the cloud and won't download it for a background program.
+const isCloudOnly = (e) => e?.errno === -11 || e?.code === 'EDEADLK' || /system error -11\b/.test(e?.code ?? '');
+const CLOUD_ONLY_HINT =
+  'OneDrive has moved this file to the cloud and won’t download it for Retro. In Finder, right-click the ' +
+  'data folder → Always Keep on This Device, then run: retro';
+
+export function createApp({ dataDir = path.join(ROOT, 'data'), readFile = fsp.readFile } = {}) {
   fs.mkdirSync(dataDir, { recursive: true });
   writeDataReadme(dataDir);
   const APP = appVersion();
@@ -76,10 +83,21 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
 
   async function readWeek(id) {
     let text = null;
-    try {
-      text = await fsp.readFile(fileFor(id), 'utf8');
-    } catch (e) {
-      if (e.code !== 'ENOENT') throw e;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        text = await readFile(fileFor(id), 'utf8');
+        break;
+      } catch (e) {
+        if (e.code === 'ENOENT') break;
+        if (!isCloudOnly(e)) throw e;
+        // The download may already be under way: give it a moment, then give up clearly.
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 400));
+          continue;
+        }
+        console.error(`Can't read ${fileFor(id)}: ${CLOUD_ONLY_HINT}`);
+        throw Object.assign(new Error(CLOUD_ONLY_HINT), { status: 503, cloudOnly: true });
+      }
     }
     const week = text == null ? emptyWeek(id) : markdownToWeek(text, id);
     return { week, version: versionOf(text), markdown: text ?? weekToMarkdown(week) };
@@ -239,6 +257,7 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
         try {
           r = await writeWeek(id, input, ifMatch);
         } catch (e) {
+          if (e.status) throw e; // e.g. 503: the file can't be read right now, not a bad request
           return send(res, 400, { error: e.message });
         }
         const body = { ...r.week, dates: weekDates(id), version: r.version };
@@ -280,7 +299,7 @@ export function createApp({ dataDir = path.join(ROOT, 'data') } = {}) {
 
   const server = http.createServer((req, res) => {
     handle(req, res).catch((e) => {
-      console.error(e);
+      if (!e.cloudOnly) console.error(e); // that one was already explained in one line
       if (e.code === 'EPERM' || e.code === 'EACCES') {
         console.error(
           `macOS blocked access to ${dataDir}. If Retro runs as a background service, allow it in ` +

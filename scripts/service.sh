@@ -201,8 +201,15 @@ cmd_status() {
   if curl -fsS "http://localhost:$PORT/api/config" >/dev/null 2>&1; then
     say "Server: answering on http://localhost:$PORT"
     lan_addresses
+    local week reason
+    week="$(date +%G-W%V)"
     if ! curl -fsS "http://localhost:$PORT/api/weeks" >/dev/null 2>&1; then
       say "But it can't read the data folder. See the log: scripts/service.sh logs"
+    elif ! curl -fsS "http://localhost:$PORT/api/weeks/$week" >/dev/null 2>&1; then
+      reason="$(curl -sS "http://localhost:$PORT/api/weeks/$week" 2>/dev/null | sed -n 's/.*"error": *"\(.*\)".*/\1/p')"
+      say "But it can't read this week's file ($week): ${reason:-see scripts/service.sh logs}"
+    else
+      say "Data: this week ($week) reads fine"
     fi
   else
     say "Server: not answering. Last lines of the log:"

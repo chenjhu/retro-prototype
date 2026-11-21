@@ -165,6 +165,11 @@ function createLocalCopy(storage) {
   };
 }
 
+/** No answer at all, or a server-side failure (5xx): keep working locally and retry. */
+const unreachable = (e) => !e.status || e.status >= 500;
+/** 'offline' = can't reach the Mac; 'unavailable' = the Mac answered but couldn't read the data. */
+const downStatus = (e) => (e.status ? 'unavailable' : 'offline');
+
 const defaultStorage = () => {
   try {
     return globalThis.localStorage ?? null;
@@ -218,10 +223,11 @@ export function createStore({ api = createApi(), saveDelay = 400, storage = defa
       persist();
     } catch (e) {
       if (state.weekId !== weekId) return;
-      if (e.status) return set({ status: 'error', error: e.message });
-      // Can't reach the Mac: carry on with the copy on this device (or a blank week).
+      if (!unreachable(e)) return set({ status: 'error', error: e.message });
+      // Can't reach the Mac, or the Mac can't read its files right now: carry on with the
+      // copy on this device (or a blank week); edits are sent once it works again.
       const fallback = saved ?? { week: withIds({ ...emptyWeek(weekId), dates: weekDates(weekId) }), version: 'empty' };
-      set({ status: 'offline', error: e.message, week: fallback.week, version: fallback.version });
+      set({ status: downStatus(e), error: e.message, week: fallback.week, version: fallback.version });
     }
   }
 
@@ -258,7 +264,7 @@ export function createStore({ api = createApi(), saveDelay = 400, storage = defa
         retryMs = 1000;
         set({ status: 'ready', error: null });
       } catch (e) {
-        set({ status: e.status ? 'error' : 'offline', error: e.message });
+        set({ status: unreachable(e) ? downStatus(e) : 'error', error: e.message });
         retryMs = Math.min(retryMs * 2, 30000);
         timer = setTimeout(save, retryMs);
         timer?.unref?.(); // (Node only) a pending retry shouldn't keep a script alive
@@ -287,7 +293,7 @@ export function createStore({ api = createApi(), saveDelay = 400, storage = defa
       persist();
       if (state.status !== 'ready') set({ status: 'ready', error: null });
     } catch (e) {
-      if (!e.status) set({ status: 'offline', error: e.message });
+      if (unreachable(e)) set({ status: downStatus(e), error: e.message });
     }
   }
 
