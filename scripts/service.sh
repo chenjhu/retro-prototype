@@ -159,6 +159,7 @@ cmd_install() {
     die "Retro is already running in a Terminal window. Close it (Ctrl+C) first, then run install again."
   fi
 
+  fetch_cloud_files "$data"
   write_plist "$data" "$node"
   start_service
   add_zshrc_block
@@ -178,10 +179,25 @@ cmd_install() {
   fi
 }
 
+# OneDrive/iCloud may have moved week files to the cloud. The background service is
+# not allowed to download them (macOS error -11), but a read from Terminal is: read
+# them all once here so they're on the Mac again.
+fetch_cloud_files() {
+  local data="$1" f n=0
+  [ -d "$data" ] || return 0
+  for f in "$data"/*.md; do
+    [ -e "$f" ] || continue
+    cat "$f" > /dev/null 2>&1 && n=$((n + 1))
+  done
+  [ "$n" -gt 0 ] && say "Checked $n data files are on this Mac."
+  return 0
+}
+
 cmd_update() {
   [ -f "$PLIST" ] || die "the service isn't installed. Run: scripts/service.sh install \"<data folder>\""
   say "Pulling the latest version…"
   git -C "$REPO" pull --ff-only
+  fetch_cloud_files "$(data_dir_from_plist)"
   say "Restarting…"
   if is_loaded; then launchctl kickstart -k "$DOMAIN/$LABEL"; else start_service; fi
   if wait_healthy; then
